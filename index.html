@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Matrícula CCP - Iguaba Grande</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        /* --- Variáveis Globais e Estilos Base --- */
+        :root {
+            --primary-color: #004494;
+            --secondary-color: #28a745;
+            --bg-color: #dbe9f4;
+            --card-bg: #eaf4fc;
+            --text-color: #333333;
+            --border-color: #b3cce6;
+            --invalid-bg: #ffe6e6;
+            --invalid-border: #ff6666;
+            --valid-bg: #e6ffe6;
+            --valid-border: #66cc66;
+        }
+
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 15px; color: var(--text-color); }
+        
+        .panel { background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 68, 148, 0.1); max-width: 1000px; margin: auto; border: 1px solid #cce0f5; }
+        .form-panel { background: var(--card-bg); }
+
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; font-size: 22px; }
+        
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #444; }
+        input[type="text"], input[type="date"], input[type="file"], select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; background-color: #ffffff; }
+        input[readonly] { background-color: #f0f0f0; cursor: not-allowed; color: #555; font-weight: bold; }
+        .input-invalid { background-color: var(--invalid-bg) !important; border-color: var(--invalid-border) !important; }
+        .input-valid { background-color: var(--valid-bg) !important; border-color: var(--valid-border) !important; }
+        
+        .row { display: flex; gap: 20px; }
+        .col { flex: 1; }
+
+        /* Grade de Cursos */
+        .cursos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; background: #ffffff; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; }
+        .curso-item { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; }
+        .curso-item label { display: flex; align-items: center; font-weight: bold; font-size: 13px; margin: 0; cursor: pointer; color: #004494; }
+        .curso-item input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
+        .turma-select { display: none; margin-top: 8px; font-size: 12px; padding: 6px; width: 100%; border: 1px solid #ccc; border-radius: 4px; background: #fff;}
+        
+        /* Botões */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 25px; border-top: 1px solid #b3cce6; padding-top: 20px; }
+        button { background-color: var(--primary-color); color: white; border: none; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: 600; font-size: 14px; }
+        button:hover { background-color: #003370; }
+        .btn-admin { background-color: #555; }
+        .btn-sec { background-color: #0066cc; }
+        .btn-cancel { background-color: #d9534f; grid-column: span 2; }
+
+        /* --- Estilos de Impressão --- */
+        #print-area { display: none; }
+        
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background: white; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            #print-area { display: block; width: 100%; font-family: Arial, sans-serif; font-size: 12px; color: #000; }
+            
+            body.print-only-ficha #print-cart { display: none !important; }
+            body.print-only-cart #print-ficha { display: none !important; }
+            body.print-only-cart .page-break { page-break-before: auto !important; padding-top: 0 !important; }
+
+            /* Ficha de Cadastro */
+            .header-print { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+            .header-content { flex-grow: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+            #header-text-default h1 { font-size: 16px; margin: 0; text-transform: uppercase; }
+            #header-text-default h2 { font-size: 14px; margin: 5px 0 0 0; border: none; font-weight: normal; }
+            .photo-box { width: 3cm; height: 4cm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            .photo-box img { max-width: 100%; max-height: 100%; object-fit: cover; }
+            
+            .section-title { background-color: #f0f0f0; border: 1px solid #000; padding: 5px; font-weight: bold; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; }
+            .data-row { display: flex; border-bottom: 1px solid #ccc; padding: 4px 0; }
+            .data-col { flex: 1; padding-right: 10px; }
+            .data-label { font-weight: bold; display: block; font-size: 10px; color: #555; }
+            .data-value { display: block; font-size: 13px; margin-top: 2px; min-height: 15px; }
+            
+            .curso-print-item { display: flex; align-items: center; border-bottom: 1px dashed #999; padding: 6px 0; }
+            .curso-print-nome { font-weight: bold; font-size: 12px; width: 45%; }
+            .curso-print-status { font-size: 11px; width: 20%; }
+            .curso-print-motivo { font-size: 11px; flex-grow: 1; display: flex; align-items: flex-end; }
+            .linha-motivo { border-bottom: 1px solid #000; flex-grow: 1; margin-left: 5px; height: 12px; }
+            .signatures { margin-top: 40px; display: flex; justify-content: space-between; text-align: center; }
+            .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 5px; }
+            .termo { font-size: 10px; text-align: center; margin-top: 25px; font-style: italic; }
+
+            /* Carteirinha */
+            .page-break { page-break-before: always; padding-top: 20px; }
+            .instrucao-corte { font-size: 10px; color: #555; text-align: center; margin-bottom: 15px; font-style: italic; }
+            .carteirinha-container { width: 17cm; height: 6.5cm; border: 2px solid #333; border-radius: 6px; margin: 0 auto; display: flex; box-sizing: border-box; background-color: #fff; overflow: hidden; }
+            .carteirinha-lado { width: 50%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
+            .carteirinha-frente { border-right: 1px dashed #999; }
+            .c-cabecalho { background-color: #004494; color: #ffffff; text-align: center; padding: 6px 0; }
+            .c-cabecalho h3 { margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+            .c-cabecalho h4 { margin: 1px 0 0 0; font-size: 9px; font-weight: normal; color: #eaf4fc; }
+            .c-body-frente { display: flex; padding: 8px; height: calc(100% - 30px); box-sizing: border-box; gap: 10px; }
+            .c-coluna-foto { display: flex; flex-direction: column; align-items: center; width: 3cm; }
+            .c-foto-mini { width: 3cm; height: 4cm; border: 1px solid #999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            .c-foto-mini img { width: 100%; height: 100%; object-fit: cover; }
+            .c-validade { font-size: 8px; font-weight: bold; color: #444; margin-top: 4px; }
+            .c-coluna-dados { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+            .c-nome { font-size: 13px; font-weight: 900; color: #000; text-transform: uppercase; line-height: 1.1; margin-bottom: 6px; }
+            .c-docs { display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px dotted #ccc; padding-bottom: 4px; }
+            .c-lbl { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; }
+            .c-val { font-size: 11px; font-weight: bold; color: #222; }
+            .c-cursos-box { margin-bottom: 6px; flex-grow: 1; }
+            .c-cursos-txt { font-size: 10px; font-weight: bold; color: #004494; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+            .c-alerta-box { background-color: #fff0f0; border: 1px solid #ffcccc; border-radius: 4px; padding: 6px; margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
+            .c-alerta-header { display: flex; justify-content: space-between; align-items: center; }
+            .c-alerta-titulo { font-size: 9px; font-weight: bold; color: #cc0000; }
+            .c-badge-sangue { background-color: #cc0000; color: white; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; }
+            .c-alerta-linha { font-size: 9px; color: #333; display: flex; }
+            .c-alerta-lbl { font-weight: bold; width: 55px; flex-shrink: 0; }
+            .c-alerta-val { font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .c-body-verso { padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: calc(100% - 30px); box-sizing: border-box; }
+            .c-assinaturas { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; margin-bottom: 15px;}
+            .c-ass-bloco { width: 90%; text-align: center;}
+            .c-ass-linha-container { height: 1.5cm; display: flex; align-items: flex-end; justify-content: center; position: relative; margin-bottom: 3px;}
+            .c-ass-linha { border-bottom: 1px solid #000; width: 100%; position: absolute; bottom: 0; }
+            .c-ass-img { max-height: 100%; max-width: 100%; z-index: 1; position: relative; }
+            .c-ass-texto { font-size: 10px; color: #111; font-weight: bold;}
+            .c-ass-subtexto { font-size: 9px; color: #444;}
+            .c-barcode-container { text-align: center; margin-top: auto; width: 100%;}
+            .c-barcode-container svg { max-height: 55px; width: 95%; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="tab-cadastro" class="tab-content active">
+        <div class="panel form-panel no-print">
+            
+            <div style="background-color: #fcfcfc; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                <label style="color: var(--primary-color); font-weight: bold; margin-bottom: 8px;">🔍 Consultar / Editar Matrícula</label>
+                <div class="row">
+                    <input type="text" id="inputBuscaCpf" list="lista-alunos-busca" placeholder="Digite o Nome ou CPF do aluno..." style="flex: 2; border: 2px solid var(--primary-color);">
+                    <datalist id="lista-alunos-busca"></datalist>
+                    <button type="button" class="btn-admin" onclick="buscarCandidato()" style="flex: 1; margin-top: 0;">Buscar Aluno</button>
+                </div>
+                <span id="busca-msg" style="font-size: 13px; margin-top: 6px; display:block; font-weight: bold;"></span>
+            </div>
+
+            <h2>Nova Ficha de Matrícula - CCP</h2>
+            <form id="cadastroForm">
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Data do Cadastro / Atualização</label>
+                        <input type="date" id="dataCadastro" readonly>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Foto 3x4 (Arquivo)</label>
+                    <input type="file" id="fotoUpload" accept="image/*" class="form-valida">
+                </div>
+
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="nome" class="form-valida">
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" id="nascimento" class="form-valida">
+                    </div>
+                    <div class="col form-group">
+                        <label>Sexo</label>
+                        <select id="sexo" class="form-valida">
+                            <option value="">Selecione...</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="col form-group">
+                        <label>CPF (Chave Única de Matrícula)</label>
+                        <input type="text" id="cpf" maxlength="14" placeholder="000.000.000-00" class="form-valida" oninput="this.value = aplicarMascaraCPF(this.value)">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Telefone / WhatsApp</label>
+                        <input type="text" id="telefone" maxlength="15" placeholder="(00) 00000-0000" class="form-valida" oninput="this.value = aplicarMascaraTelefone(this.value)">
+                    </div>
+                    <div class="col form-group">
+                        <label>E-mail</label>
+                        <input type="text" id="email" placeholder="exemplo@email.com" class="form-valida">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>CEP</label>
+                        <input type="text" id="cep" maxlength="10" placeholder="00.000-000" class="form-valida" oninput="this.value = aplicarMascaraCEP(this.value)">
+                    </div>
+                    <div class="col form-group">
+                        <label>Cidade</label>
+                        <input type="text" id="cidade" value="Iguaba Grande" class="form-valida">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Logradouro</label>
+                    <input type="text" id="logradouro" placeholder="Rua, Avenida, etc." class="form-valida">
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Bairro</label>
+                        <select id="bairro" class="form-valida">
+                            <option value="">Selecione um bairro...</option>
+                            <option value="Balneário dos Signos">Balneário dos Signos</option>
+                            <option value="Canellas City">Canellas City</option>
+                            <option value="Centro">Centro</option>
+                            <option value="Cidade Nova">Cidade Nova</option>
+                            <option value="Coqueiros">Coqueiros</option>
+                            <option value="Estação">Estação</option>
+                            <option value="Igarapiapunha">Igarapiapunha</option>
+                            <option value="Iguaba Pequena">Iguaba Pequena</option>
+                            <option value="Jardim Solares">Jardim Solares</option>
+                            <option value="Lagoinha">Lagoinha</option>
+                            <option value="Laguna Azul">Laguna Azul</option>
+                            <option value="Nova Iguaba">Nova Iguaba</option>
+                            <option value="Parque dos Desejos">Parque dos Desejos</option>
+                            <option value="Parque Tamariz">Parque Tamariz</option>
+                            <option value="Pedreira">Pedreira</option>
+                            <option value="Sapeatiba Mirim">Sapeatiba Mirim</option>
+                            <option value="São Miguel">São Miguel</option>
+                            <option value="Ubás">Ubás</option>
+                            <option value="União">União</option>
+                            <option value="Vila dos Coqueiros">Vila dos Coqueiros</option>
+                            <option value="Vila Nova">Vila Nova</option>
+                        </select>
+                    </div>
+                    <div class="col form-group">
+                        <label>Ponto de Referência</label>
+                        <input type="text" id="referencia" class="form-valida">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Nível de Escolaridade</label>
+                        <select id="escolaridade" class="form-valida">
+                            <option value="">Selecione...</option>
+                            <option value="Ensino Fundamental Incompleto">Ensino Fundamental Incompleto</option>
+                            <option value="Ensino Fundamental Completo">Ensino Fundamental Completo</option>
+                            <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
+                            <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+                            <option value="Ensino Superior Incompleto">Ensino Superior Incompleto</option>
+                            <option value="Ensino Superior Completo">Ensino Superior Completo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="background: #e1eefc; padding: 15px; border-radius: 8px; border: 1px solid var(--primary-color);">
+                    <label style="color: var(--primary-color); font-size: 16px;">📚 Curso(s) e Turma(s) Matriculada(s)</label>
+                    <p style="font-size: 12px; margin-top: 0; color: #555;">Selecione o curso e em seguida a Turma/Horário oficial desejada.</p>
+                    <div class="cursos-grid" id="grid-cursos"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Tipo Sanguíneo</label>
+                        <select id="tipoSanguineo" class="form-valida">
+                            <option value="Não Informado">Não Informado</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div class="col form-group">
+                        <label>Cadastrado no CadÚnico? (Informe o NIS se sim)</label>
+                        <input type="text" id="cadunico" value="Não" class="form-valida">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Possui alguma alergia? Qual?</label>
+                        <input type="text" id="alergia" value="Não" class="form-valida">
+                    </div>
+                    <div class="col form-group">
+                        <label>Faz uso de medicamento? Qual?</label>
+                        <input type="text" id="medicamento" value="Não" class="form-valida">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Observações Gerais</label>
+                    <textarea id="observacoes" rows="2" placeholder="Informações adicionais relevantes..." class="form-valida"></textarea>
+                </div>
+
+                <div class="action-grid">
+                    <button type="button" onclick="gerarImpressao('ambas')" style="background-color: #000;">🖨️ Salvar e Imprimir Ambos</button>
+                    <button type="button" class="btn-admin" onclick="gerarImpressao('nenhuma')">💾 Apenas Salvar (Sem Imprimir)</button>
+                    <button type="button" class="btn-sec" onclick="gerarImpressao('ficha')">📄 Salvar e Imprimir Só Ficha</button>
+                    <button type="button" class="btn-sec" onclick="gerarImpressao('cart')">🪪 Salvar e Imprimir Só Carteirinha</button>
+                    <button type="button" class="btn-cancel" onclick="limparFormulario()">❌ Limpar Dados / Cancelar Edição</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div id="print-ficha">
+            <div class="header-print">
+                <div class="header-content">
+                    <img id="print-cabecalho-img" src="" alt="Cabeçalho Institucional" style="max-width: 100%; max-height: 100px; display: none; margin: 0 auto;">
+                    <div id="header-text-default">
+                        <h1>PREFEITURA DE IGUABA GRANDE</h1>
+                        <h2>SECRETARIA DE DESENVOLVIMENTO ECONÔMICO, TRABALHO E RENDA</h2>
+                        <h2 style="font-weight: bold; margin-top: 10px;">FICHA DE CADASTRO - CCP</h2>
+                    </div>
+                </div>
+                <div class="photo-box"><img id="print-img-ficha" src="" alt="Foto"></div>
+            </div>
+
+            <div class="section-title">Dados do Cadastro</div>
+            <div class="data-row"><div class="data-col"><span class="data-label">CPF</span><span class="data-value" id="p-cpf"></span></div><div class="data-col"><span class="data-label">Data</span><span class="data-value" id="p-dataCadastro"></span></div></div>
+
+            <div class="section-title">Dados Pessoais</div>
+            <div class="data-row"><div class="data-col" style="flex: 2;"><span class="data-label">Nome Completo</span><span class="data-value" id="p-nome"></span></div></div>
+            <div class="data-row"><div class="data-col"><span class="data-label">Data de Nascimento</span><span class="data-value" id="p-nascimento"></span></div><div class="data-col"><span class="data-label">Sexo</span><span class="data-value" id="p-sexo"></span></div></div>
+
+            <div class="section-title">Dados de Contato e Endereço</div>
+            <div class="data-row"><div class="data-col"><span class="data-label">Telefone</span><span class="data-value" id="p-telefone"></span></div><div class="data-col"><span class="data-label">E-mail</span><span class="data-value" id="p-email"></span></div></div>
+            <div class="data-row"><div class="data-col" style="flex: 2;"><span class="data-label">Logradouro</span><span class="data-value" id="p-logradouro"></span></div><div class="data-col"><span class="data-label">Bairro</span><span class="data-value" id="p-bairro"></span></div></div>
+            <div class="data-row"><div class="data-col"><span class="data-label">CEP</span><span class="data-value" id="p-cep"></span></div><div class="data-col"><span class="data-label">Cidade</span><span class="data-value" id="p-cidade"></span></div><div class="data-col"><span class="data-label">Referência</span><span class="data-value" id="p-referencia"></span></div></div>
+
+            <div class="section-title">Escolaridade</div>
+            <div class="data-row"><div class="data-col"><span class="data-label">Nível Selecionado</span><span class="data-value" id="p-escolaridade"></span></div></div>
+
+            <div class="section-title">Cursos e Turmas Matriculadas</div>
+            <div id="p-cursos-container"></div>
+
+            <div class="section-title">Informações de Saúde e Sociais</div>
+            <div class="data-row"><div class="data-col"><span class="data-label">Tipo Sanguíneo</span><span class="data-value" id="p-tipoSanguineo"></span></div><div class="data-col"><span class="data-label">CadÚnico / NIS</span><span class="data-value" id="p-cadunico"></span></div></div>
+            <div class="data-row"><div class="data-col"><span class="data-label">Alergias</span><span class="data-value" id="p-alergia"></span></div><div class="data-col"><span class="data-label">Medicamentos</span><span class="data-value" id="p-medicamento"></span></div></div>
+
+            <div class="section-title">Informações Adicionais</div>
+            <div class="data-row"><div class="data-col"><span class="data-label">Observações Gerais</span><span class="data-value" id="p-observacoes"></span></div></div>
+
+            <div class="termo">Ao assinar este formulário, declaro que as informações são verdadeiras.</div>
+            <div class="signatures"><div class="sig-line">Assinatura do Aluno</div><div class="sig-line">Assinatura do Funcionário</div></div>
+        </div>
+
+        <div id="print-cart" class="page-break">
+            <div class="instrucao-corte">Recorte na linha pontilhada e dobre ao meio para formar a carteirinha.</div>
+            <div class="carteirinha-container">
+                <div class="carteirinha-lado carteirinha-frente">
+                    <div class="c-cabecalho"><h3>Prefeitura de Iguaba Grande</h3><h4>Centro de Capacitação Profissional</h4></div>
+                    <div class="c-body-frente">
+                        <div class="c-coluna-foto">
+                            <div class="c-foto-mini"><img id="print-img-cart" src="" alt="Foto"></div>
+                            <div class="c-validade">Validade: 31/12/2026</div>
+                        </div>
+                        <div class="c-coluna-dados">
+                            <div class="c-nome" id="c-nome"></div>
+                            <div class="c-docs">
+                                <div class="c-doc-item"><span class="c-lbl">CPF</span><span class="c-val" id="c-cpf"></span></div>
+                                <div class="c-doc-item" style="text-align: right;"><span class="c-lbl">Nasc.</span><span class="c-val" id="c-nascimento"></span></div>
+                            </div>
+                            <div class="c-cursos-box"><span class="c-lbl">CURSOS / TURMAS</span><div class="c-cursos-txt" id="c-cursos-lista"></div></div>
+                            <div class="c-alerta-box">
+                                <div class="c-alerta-header"><span class="c-alerta-titulo">⚠ INFORMAÇÕES MÉDICAS</span><span class="c-badge-sangue" id="c-sangue-badge"></span></div>
+                                <div class="c-alerta-linha"><span class="c-alerta-lbl">Alergias:</span><span class="c-alerta-val" id="c-alergia-cart"></span></div>
+                                <div class="c-alerta-linha"><span class="c-alerta-lbl">Uso Med.:</span><span class="c-alerta-val" id="c-medicamento-cart"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carteirinha-lado carteirinha-verso">
+                    <div class="c-cabecalho"><h3>Identificação Estudantil</h3><h4>Válido para o semestre vigente</h4></div>
+                    <div class="c-body-verso">
+                        <div class="c-barcode-container"><svg id="barcode"></svg></div>
+                        <div class="c-assinaturas">
+                            <div class="c-ass-bloco">
+                                <div class="c-ass-linha-container">
+                                    <img id="print-ass-img" class="c-ass-img" src="" alt="Assinatura" style="display: none;">
+                                    <div class="c-ass-linha"></div>
+                                </div>
+                                <div class="c-ass-texto">Elizetth dos Santos Peixoto</div><div class="c-ass-subtexto">Coordenadora do CCP</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Banco de dados em cache local
+        let alunosCadastrados = JSON.parse(localStorage.getItem('ccp_alunos')) || [];
+        
+        // Mapeamento institucional imutável de Cursos e Turmas
+        const MAPA_CURSOS = {
+            "REFLEXOLOGIA PODAL": ["Turma 01 (TARDE - Terça)", "Turma 02 (NOITE - Terça)", "Pendente/Lista de Espera"],
+            "MASSOTERAPIA": ["Turma 01 (TARDE - Segunda)", "Turma 02 (NOITE - Segunda)", "Pendente/Lista de Espera"],
+            "MANICURE E PEDICURE": ["Turma 01 (NOITE - Segunda)", "Turma 02 (MANHÃ - Quarta)", "Pendente/Lista de Espera"],
+            "UNHAS EM GEL": ["Turma 01 (NOITE - Terça)", "Turma 02 (MANHÃ - Quinta)", "Pendente/Lista de Espera"],
+            "RECEPÇÃO EM MEIOS DE HOSPEDAGEM": ["Turma 01 (NOITE - Quinta)", "Turma 02 (TARDE - Sexta)", "Pendente/Lista de Espera"],
+            "MOLDES, CORTES E COSTURA": ["Turma 01 (MANHÃ - Quarta)", "Turma 02 (TARDE - Quinta)", "Pendente/Lista de Espera"],
+            "COSTURA CRIATIVA": ["Turma Única (MANHÃ - Quinta)", "Pendente/Lista de Espera"],
+            "MODELAGEM DE ROUPAS": ["Turma Única (TARDE - Quarta)", "Pendente/Lista de Espera"],
+            "CONFEITARIA": ["Turma 01 (MANHÃ - Segunda)", "Turma 02 (TARDE - Quinta)", "Pendente/Lista de Espera"],
+            "CAKE DESIGNER": ["Turma 01 (TARDE - Segunda)", "Turma 02 (MANHÃ - Quinta)", "Pendente/Lista de Espera"],
+            "LANCHEIRO": ["Turma 01 (NOITE - Segunda)", "Turma 02 (NOITE - Quarta)", "Pendente/Lista de Espera"],
+            "PADEIRO": ["Turma 01 (MANHÃ - Terça)", "Turma 02 (TARDE - Terça)", "Pendente/Lista de Espera"],
+            "BARTENDER": ["Turma 01 (TARDE - Quinta)", "Turma 02 (MANHÃ - Sexta)", "Pendente/Lista de Espera"]
+        };
+
+        // Renderização Dinâmica da Grade Curricular no Formulário
+        function renderGradeCursos() {
+            const grid = document.getElementById('grid-cursos');
+            let html = '';
+            for(let curso in MAPA_CURSOS) {
+                html += `<div class="curso-item" id="item-${curso}">
+                    <label><input type="checkbox" name="curso" value="${curso}" onchange="toggleTurma('${curso}')"> ${curso}</label>
+                    <select class="turma-select form-valida" id="turma-${curso}">
+                        <option value="">Selecione o Horário...</option>`;
+                MAPA_CURSOS[curso].forEach(turma => { html += `<option value="${turma}">${turma}</option>`; });
+                html += `</select></div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        function toggleTurma(curso) {
+            const checkbox = document.querySelector(`input[value="${curso}"]`);
+            const select = document.getElementById(`turma-${curso}`);
+            const div = document.getElementById(`item-${curso}`);
+            if(checkbox.checked) {
+                select.style.display = 'block'; div.style.background = '#e6f2ff'; div.style.borderColor = 'var(--primary-color)';
+            } else {
+                select.style.display = 'none'; select.value = ''; div.style.background = '#f9f9f9'; div.style.borderColor = '#ddd';
+            }
+            atualizarCoresValidacao();
+        }
+
+        // Sistema de Datalist para Autocompletar a Busca Interna
+        function atualizarDatalistBusca() {
+            const datalist = document.getElementById('lista-alunos-busca');
+            datalist.innerHTML = '';
+            alunosCadastrados.forEach(aluno => {
+                const option = document.createElement('option');
+                option.value = `${aluno.nome} - ${aluno.cpf}`;
+                datalist.appendChild(option);
+            });
+        }
+
+        // Execuções Init ao Carregar o DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGradeCursos();
+            document.getElementById('dataCadastro').value = new Date().toISOString().split('T')[0];
+            atualizarDatalistBusca();
+            atualizarCoresValidacao();
+            
+            const cabecalhoSalvo = localStorage.getItem('ccp_cabecalho');
+            if(cabecalhoSalvo) document.getElementById('print-cabecalho-img').src = cabecalhoSalvo;
+            const assinaturaSalva = localStorage.getItem('ccp_assinatura');
+            if(assinaturaSalva) document.getElementById('print-ass-img').src = assinaturaSalva;
+        });
+
+        // Máscaras e Formatações de Dados de Entrada
+        function aplicarMascaraCPF(v) { v = v.replace(/\D/g, ""); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2"); return v; }
+        function aplicarMascaraTelefone(v) { v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); v = v.replace(/(\d{5})(\d)/, "$1-$2"); return v; }
+        function aplicarMascaraCEP(v) { v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/, "$1.$2"); v = v.replace(/\.(\d{3})(\d)/, ".$1-$2"); return v; }
+        function formatarDataBR(dataISO) { if (!dataISO) return ""; const partes = dataISO.split('-'); return partes.length !== 3 ? dataISO : `${partes[2]}/${partes[1]}/${partes[0]}`; }
+        function formatarDataISO(dataBR) { if(!dataBR || !dataBR.includes('/')) return dataBR; const parts = dataBR.split('/'); return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dataBR; }
+
+        // Validação Visual Dinâmica (Campos Obrigatórios)
+        function atualizarCoresValidacao() {
+            document.querySelectorAll('.form-valida').forEach(campo => {
+                if(campo.type === 'checkbox') return;
+                if(campo.classList.contains('turma-select')) {
+                    const curso = campo.id.split('-')[1];
+                    const checkbox = document.querySelector(`input[value="${curso}"]`);
+                    if(!checkbox || !checkbox.checked) { campo.classList.remove('input-invalid', 'input-valid'); return; }
+                }
+                if (campo.value.trim() === '') { campo.classList.add('input-invalid'); campo.classList.remove('input-valid'); }
+                else { campo.classList.add('input-valid'); campo.classList.remove('input-invalid'); }
+            });
+        }
+        document.getElementById('cadastroForm').addEventListener('input', atualizarCoresValidacao);
+        document.getElementById('cadastroForm').addEventListener('change', atualizarCoresValidacao);
+
+        // Processamento de Strings Multiseleção de Cursos
+        function capturarCursosFormulario() {
+            const checkboxes = document.querySelectorAll('input[name="curso"]:checked');
+            let stringFinal = [];
+            checkboxes.forEach(cb => {
+                const curso = cb.value;
+                const turma = document.getElementById(`turma-${curso}`).value || "Não Informado";
+                stringFinal.push(`${curso} [${turma}]`);
+            });
+            return stringFinal.join(' | ');
+        }
+
+        function popularCursosNoFormulario(cursosString) {
+            document.querySelectorAll('input[name="curso"]').forEach(cb => { cb.checked = false; toggleTurma(cb.value); });
+            if(!cursosString) return;
+            const itens = cursosString.split('|').map(s => s.trim());
+            itens.forEach(item => {
+                let curso = item; let turma = "Pendente/Lista de Espera";
+                const match = item.match(/(.*?) \[(.*?)\]/);
+                if(match) { curso = match[1].trim(); turma = match[2].trim(); }
+
+                const cb = document.querySelector(`input[value="${curso.toUpperCase()}"]`);
+                if(cb) {
+                    cb.checked = true; toggleTurma(curso.toUpperCase());
+                    const sel = document.getElementById(`turma-${curso.toUpperCase()}`);
+                    if(sel) {
+                        let optionExists = Array.from(sel.options).some(opt => opt.value === turma);
+                        sel.value = optionExists ? turma : "Pendente/Lista de Espera";
+                    }
+                }
+            });
+        }
+
+        // Função de Busca e Ativação do Modo de Edição
+        function buscarCandidato(identificadorForcado = null) {
+            const msgBox = document.getElementById('busca-msg');
+            let termo = identificadorForcado || document.getElementById('inputBuscaCpf').value.trim();
+            if(!termo) { msgBox.innerText = "Digite um nome ou CPF."; msgBox.style.color = "#d9534f"; return; }
+
+            let cpfLimpo = termo.replace(/\D/g, "");
+            let dados = alunosCadastrados.find(a => (cpfLimpo.length > 0 && a.cpf.replace(/\D/g, "") === cpfLimpo) || a.nome.toLowerCase() === termo.toLowerCase() || `${a.nome} - ${a.cpf}` === termo);
+
+            if(!dados) { msgBox.innerText = "Aluno não encontrado."; msgBox.style.color = "#d9534f"; return; }
+
+            document.getElementById('dataCadastro').value = formatarDataISO(dados.dataCadastro); document.getElementById('nome').value = dados.nome;
+            document.getElementById('cpf').value = dados.cpf.replace(/\D/g, "").length === 11 ? aplicarMascaraCPF(dados.cpf) : dados.cpf;
+            document.getElementById('telefone').value = aplicarMascaraTelefone(dados.telefone || ""); document.getElementById('email').value = dados.email || "";
+            document.getElementById('cep').value = aplicarMascaraCEP(dados.cep || ""); document.getElementById('cidade').value = dados.cidade || "Iguaba Grande";
+            document.getElementById('logradouro').value = dados.logradouro || ""; document.getElementById('nascimento').value = formatarDataISO(dados.nascimento);
+            document.getElementById('sexo').value = dados.sexo || ""; document.getElementById('bairro').value = dados.bairro || "";
+            document.getElementById('referencia').value = dados.referencia || ""; document.getElementById('escolaridade').value = dados.escolaridade || "";
+            document.getElementById('tipoSanguineo').value = dados.tipoSanguineo || "Não Informado"; document.getElementById('cadunico').value = dados.cadunico || "Não";
+            document.getElementById('alergia').value = dados.alergia || "Não"; document.getElementById('medicamento').value = dados.medicamento || "Não";
+            document.getElementById('observacoes').value = dados.observacoes || "";
+
+            popularCursosNoFormulario(dados.cursos); atualizarCoresValidacao();
+            document.getElementById('inputBuscaCpf').value = ""; window.scrollTo({ top: 0, behavior: 'smooth' });
+            msgBox.innerText = "Modo de Edição Ativo."; msgBox.style.color = "var(--secondary-color)";
+        }
+
+        // Upload de Mídia Fotográfica em Base64
+        document.getElementById('fotoUpload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { document.getElementById('print-img-ficha').src = e.target.result; document.getElementById('print-img-cart').src = e.target.result; }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Rotina de Persistência, Geração do Código de Barras e Disparo do Print Direcionado
+        function gerarImpressao(modoImpressao) {
+            const cpfInput = document.getElementById('cpf').value;
+            if(cpfInput.trim() === '') { alert("Atenção! O preenchimento do CPF é obrigatório."); return; }
+
+            let erroTurma = false;
+            document.querySelectorAll('input[name="curso"]:checked').forEach(cb => { if(!document.getElementById(`turma-${cb.value}`).value) erroTurma = true; });
+            if(erroTurma) { alert("Você marcou um curso, mas esqueceu da Turma."); return; }
+
+            const camposTextuais = ['nome', 'sexo', 'cpf', 'telefone', 'email', 'cep', 'cidade', 'logradouro', 'bairro', 'referencia', 'escolaridade', 'tipoSanguineo', 'medicamento', 'alergia', 'cadunico', 'observacoes'];
+            let dadosAluno = {};
+
+            camposTextuais.forEach(campo => {
+                const el = document.getElementById(campo);
+                if(el) { dadosAluno[campo] = el.value; const pEl = document.getElementById('p-' + campo); if(pEl) pEl.innerText = el.value; }
+            });
+
+            const dataCadastroBR = formatarDataBR(document.getElementById('dataCadastro').value); const dataNascimentoBR = formatarDataBR(document.getElementById('nascimento').value);
+            document.getElementById('p-dataCadastro').innerText = dataCadastroBR; document.getElementById('p-nascimento').innerText = dataNascimentoBR;
+            dadosAluno['dataCadastro'] = dataCadastroBR; dadosAluno['nascimento'] = dataNascimentoBR;
+
+            const cpfLimpo = dadosAluno.cpf.replace(/\D/g, '');
+            if(cpfLimpo.length > 0) JsBarcode("#barcode", cpfLimpo, { format: "CODE128", width: 1.5, height: 50, displayValue: true, fontSize: 13, margin: 0 });
+
+            let htmlCursosFicha = ''; let txtCursosCart = ''; const strCursosDB = capturarCursosFormulario();
+            
+            if(strCursosDB === '') {
+                htmlCursosFicha = '<div class="data-row"><div class="data-col">Nenhum curso.</div></div>'; txtCursosCart = 'Nenhum curso';
+            } else {
+                strCursosDB.split(' | ').forEach(c => { htmlCursosFicha += `<div class="curso-print-item"><div class="curso-print-nome">${c}</div><div class="curso-print-status">Concluiu? ( ) Sim &nbsp; ( ) Não</div><div class="curso-print-motivo">Motivo: <div class="linha-motivo"></div></div></div>`; });
+                txtCursosCart = strCursosDB;
+            }
+
+            document.getElementById('p-cursos-container').innerHTML = htmlCursosFicha; dadosAluno.cursos = strCursosDB;
+            document.getElementById('c-nome').innerText = dadosAluno.nome; document.getElementById('c-cpf').innerText = dadosAluno.cpf;
+            document.getElementById('c-nascimento').innerText = dataNascimentoBR; document.getElementById('c-cursos-lista').innerText = txtCursosCart;
+            document.getElementById('c-sangue-badge').innerText = dadosAluno.tipoSanguineo; document.getElementById('c-alergia-cart').innerText = dadosAluno.alergia; document.getElementById('c-medicamento-cart').innerText = dadosAluno.medicamento;
+
+            const index = alunosCadastrados.findIndex(a => a.cpf === dadosAluno.cpf);
+            if (index >= 0) alunosCadastrados[index] = dadosAluno; else alunosCadastrados.push(dadosAluno);
+            localStorage.setItem('ccp_alunos', JSON.stringify(alunosCadastrados)); atualizarDatalistBusca();
+
+            if(modoImpressao === 'ficha') document.body.classList.add('print-only-ficha');
+            else if(modoImpressao === 'cart') document.body.classList.add('print-only-cart');
+
+            if(modoImpressao !== 'nenhuma') { window.print(); } else { alert(`Dados de ${dadosAluno.nome} salvos.`); }
+            document.body.classList.remove('print-only-ficha', 'print-only-cart'); limparFormulario();
+        }
+
+        function limparFormulario() {
+            document.getElementById('cadastroForm').reset();
+            popularCursosNoFormulario('');
+            document.getElementById('inputBuscaCpf').value = "";
+            document.getElementById('busca-msg').innerText = "";
+            document.getElementById('print-img-ficha').src = "";
+            document.getElementById('print-img-cart').src = "";
+            document.getElementById('p-cursos-container').innerHTML = "";
+            document.getElementById('c-cursos-lista').innerText = "";
+            
+            document.getElementById('dataCadastro').value = new Date().toISOString().split('T')[0];
+            document.getElementById('tipoSanguineo').value = "Não Informado";
+            document.getElementById('medicamento').value = "Não";
+            document.getElementById('alergia').value = "Não";
+            document.getElementById('cadunico').value = "Não";
+            atualizarCoresValidacao(); window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

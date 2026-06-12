@@ -9,7 +9,7 @@
     <style>
         /* --- Variáveis Globais (Modo Escuro / Dark Mode) --- */
         :root {
-            color-scheme: dark; /* FORÇA COMPONENTES NATIVOS DO NAVEGADOR PARA MODO ESCURO */
+            color-scheme: dark;
             --primary-color: #3b82f6; 
             --secondary-color: #10b981; 
             --bg-color: #0f172a; 
@@ -45,7 +45,6 @@
         input[readonly] { background-color: var(--bg-color); cursor: not-allowed; color: #94a3b8; font-weight: bold; }
         input:focus, select:focus, textarea:focus { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); border-color: var(--primary-color); outline: none; }
         
-        /* --- Correção Definitiva para as Caixas de Seleção no Modo Escuro --- */
         select option {
             background-color: var(--card-bg) !important;
             color: var(--text-color) !important;
@@ -76,14 +75,14 @@
         .btn-sec:hover { background-color: #0369a1; }
         .btn-danger { background-color: #ef4444; }
         .btn-danger:hover { background-color: #dc2626; }
-        .btn-cancel { background-color: #ef4444; grid-column: span 2; }
-        .btn-cancel:hover { background-color: #dc2626; }
+        .btn-cancel { background-color: #64748b; }
+        .btn-cancel:hover { background-color: #475569; }
 
         /* --- Estilos da Impressão (Fidelidade Alva) --- */
         #print-area { display: none; }
         
         @media print {
-            :root { color-scheme: light !important; } /* Proteção para voltar o fundo para branco na impressão */
+            :root { color-scheme: light !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body { background: white !important; margin: 0; padding: 0; color: #000 !important; }
             .no-print { display: none !important; }
@@ -183,7 +182,7 @@
     <div class="container" id="main-content" style="display: none;">
         <header class="no-print">
             <h1>MÓDULO DE MATRÍCULAS - CCP</h1>
-            <p style="color: var(--text-muted); margin: 5px 0 0 0; font-weight: 600;">Prefeitura de Iguaba Grande | Utilizador: <span id="user-profile-display" style="color: var(--primary-color);"></span></p>
+            <p style="color: var(--text-muted); margin: 5px 0 0 0; font-weight: 600;">Prefeitura de Iguaba Grande | Perfil: <span id="user-profile-display" style="color: var(--primary-color);"></span></p>
             <button class="btn-danger" style="margin-top: 15px; padding: 6px 12px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer;" onclick="encerrarSessao()">Terminar Sessão</button>
         </header>
 
@@ -360,11 +359,12 @@
                 </div>
 
                 <div class="action-grid">
-                    <button type="button" class="btn-print-all" onclick="gerarImpressao('ambas')">🖨️ Gravar na Nuvem e Imprimir Ambos</button>
-                    <button type="button" class="btn-admin" onclick="gerarImpressao('nenhuma')">💾 Apenas Gravar na Nuvem</button>
-                    <button type="button" class="btn-sec" onclick="gerarImpressao('ficha')">📄 Gravar e Imprimir Só Ficha</button>
-                    <button type="button" class="btn-sec" onclick="gerarImpressao('cart')">🪪 Gravar e Imprimir Só Carteirinha</button>
-                    <button type="button" class="btn-cancel" onclick="limparFormulario()">❌ Limpar Dados / Cancelar Edição</button>
+                    <button type="button" class="btn-print-all" id="btnActionPrintAll" onclick="gerarImpressao('ambas')">🖨️ Gravar na Nuvem e Imprimir Ambos</button>
+                    <button type="button" class="btn-admin" id="btnActionSave" onclick="gerarImpressao('nenhuma')">💾 Apenas Gravar na Nuvem</button>
+                    <button type="button" class="btn-sec" id="btnActionPrintFicha" onclick="gerarImpressao('ficha')">📄 Gravar e Imprimir Só Ficha</button>
+                    <button type="button" class="btn-sec" id="btnActionPrintCart" onclick="gerarImpressao('cart')">🪪 Gravar e Imprimir Só Carteirinha</button>
+                    <button type="button" class="btn-danger" id="btnActionDelete" onclick="excluirAluno()" style="display: none;">🗑️ Excluir Definitivamente</button>
+                    <button type="button" class="btn-cancel" onclick="limparFormulario()" id="btnActionCancel">❌ Limpar Dados / Cancelar</button>
                 </div>
             </form>
         </div>
@@ -374,11 +374,9 @@
         <div id="print-ficha">
             <div class="header-print">
                 <div class="header-content">
-                    <img id="print-cabecalho-img" src="" alt="Cabeçalho Institucional" style="max-width: 100%; max-height: 100px; display: none; margin: 0 auto;">
+                    <img id="print-cabecalho-img" src="image_773d3e.png" alt="Cabeçalho Institucional" style="max-width: 100%; max-height: 100px; display: block; margin: 0 auto;">
                     <div id="header-text-default">
-                        <h1>PREFEITURA DE IGUABA GRANDE</h1>
-                        <h2>SECRETARIA DE DESENVOLVIMENTO ECONÔMICO, TRABALHO E RENDA</h2>
-                        <h2 style="font-weight: bold; margin-top: 10px;">FICHA DE CADASTRO - CCP</h2>
+                        <h2 style="font-weight: bold; margin-top: 10px; font-size: 16px; text-transform: uppercase;">FICHA DE CADASTRO - CCP</h2>
                     </div>
                 </div>
                 <div class="photo-box"><img id="print-img-ficha" src="" alt="Foto"></div>
@@ -464,8 +462,10 @@
         const supa = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let utilizadorAtual = null;
+        let nivelAcessoUsuario = null;
         let todosAlunosNuvem = [];
         let mapaCursosDinamico = {};
+        let alunoEditandoCpf = null; // Controle dinâmico do estado do formulário
 
         // --- Sistema de Autenticação ---
         document.addEventListener("DOMContentLoaded", async () => {
@@ -491,7 +491,30 @@
         }
 
         async function iniciarSistema() {
-            document.getElementById('user-profile-display').innerText = utilizadorAtual.email;
+            // Verifica o nível de acesso na tabela de perfis
+            const { data: perfilData, error: perfilError } = await supa
+                .from('perfis') 
+                .select('nivel_acesso')
+                .eq('id', utilizadorAtual.id)
+                .single();
+
+            if (perfilData) {
+                nivelAcessoUsuario = perfilData.nivel_acesso;
+            } else {
+                alert("Perfil de acesso não configurado.");
+                await supa.auth.signOut();
+                return;
+            }
+
+            // Bloqueio rigoroso de Alunos e Instrutores no Módulo de Matrículas
+            if (nivelAcessoUsuario === 'Alunos' || nivelAcessoUsuario === 'Instrutor') {
+                alert("Acesso negado: O seu perfil (" + nivelAcessoUsuario + ") não possui autorização para acessar o Módulo de Matrículas.");
+                await supa.auth.signOut();
+                window.location.reload();
+                return;
+            }
+
+            document.getElementById('user-profile-display').innerText = nivelAcessoUsuario;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             
@@ -501,13 +524,41 @@
             await baixarListaGlobalAlunos();
             atualizarCoresValidacao();
 
+            // A imagem estática é definida pelo src agora. Caso o utilizador ainda tenha configurado outra
+            // imagem de cabeçalho pelo localStorage, mantive a linha para não quebrar fluxos anteriores, 
+            // mas o padrão passa a ser o image_773d3e.png.
             const cabecalhoSalvo = localStorage.getItem('ccp_cabecalho');
             if(cabecalhoSalvo) document.getElementById('print-cabecalho-img').src = cabecalhoSalvo;
+            
             const assinaturaSalva = localStorage.getItem('ccp_assinatura');
             if(assinaturaSalva) document.getElementById('print-ass-img').src = assinaturaSalva;
         }
 
         async function encerrarSessao() { await supa.auth.signOut(); window.location.reload(); }
+
+        // Ajusta as opções visíveis para o perfil Diretora com base na interação (Novo ou Edição)
+        function ajustarBotoesDiretora(somenteLeitura) {
+            if(nivelAcessoUsuario !== 'Diretora') return;
+            
+            const btnPrintAll = document.getElementById('btnActionPrintAll');
+            const btnSave = document.getElementById('btnActionSave');
+            const btnPrintFicha = document.getElementById('btnActionPrintFicha');
+            const btnPrintCart = document.getElementById('btnActionPrintCart');
+
+            if (!btnPrintAll || !btnSave || !btnPrintFicha || !btnPrintCart) return;
+
+            if(somenteLeitura) {
+                btnPrintAll.innerText = "🖨️ Apenas Imprimir Ambos";
+                btnSave.style.display = "none";
+                btnPrintFicha.innerText = "📄 Apenas Imprimir Ficha";
+                btnPrintCart.innerText = "🪪 Apenas Imprimir Carteirinha";
+            } else {
+                btnPrintAll.innerText = "🖨️ Gravar na Nuvem e Imprimir Ambos";
+                btnSave.style.display = "block";
+                btnPrintFicha.innerText = "📄 Gravar e Imprimir Só Ficha";
+                btnPrintCart.innerText = "🪪 Gravar e Imprimir Só Carteirinha";
+            }
+        }
 
         // --- Integração Dinâmica de Cursos e Turmas do Supabase ---
         async function carregarCursosETurmas() {
@@ -637,7 +688,40 @@
             
             document.getElementById('inputBuscaCpf').value = ""; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            msgBox.innerText = "Modo de Edição Ativo."; msgBox.style.color = "var(--secondary-color)";
+            
+            alunoEditandoCpf = dados.cpf; // Guarda a referência de que estamos visualizando/editando
+            
+            if(nivelAcessoUsuario === 'Diretora') {
+                msgBox.innerText = ""; 
+                msgBox.style.color = "#f59e0b";
+                ajustarBotoesDiretora(true);
+            } else {
+                msgBox.innerText = "Modo de Edição Ativo."; 
+                msgBox.style.color = "var(--secondary-color)";
+            }
+
+            // Exibe o botão de exclusão apenas se for Admin
+            if (nivelAcessoUsuario === 'Admin') {
+                document.getElementById('btnActionDelete').style.display = 'block';
+            }
+        }
+
+        // --- Função de Exclusão Definitiva ---
+        async function excluirAluno() {
+            if (nivelAcessoUsuario !== 'Admin') return;
+            if (!alunoEditandoCpf) return;
+
+            if(confirm("ATENÇÃO: Deseja realmente excluir definitivamente o cadastro deste aluno?\nEsta ação não pode ser desfeita.")) {
+                const { error } = await supa.from('alunos_ccp').delete().eq('cpf', alunoEditandoCpf);
+                
+                if(error) {
+                    alert("Erro ao excluir cadastro: " + error.message);
+                } else {
+                    alert("Cadastro excluído com sucesso do banco de dados.");
+                    limparFormulario();
+                    await baixarListaGlobalAlunos();
+                }
+            }
         }
 
         // --- Funções de Validação e Formatação ---
@@ -711,7 +795,7 @@
             }
         });
 
-        // --- Transação Direta Supabase (Upsert) ---
+        // --- Transação Direta Supabase (Upsert e Impressão) ---
         async function gerarImpressao(modoImpressao) {
             const cpfInput = document.getElementById('cpf').value;
             if(cpfInput.trim() === '' || cpfInput.length < 14) { alert("Atenção! O preenchimento completo do CPF é obrigatório."); return; }
@@ -777,17 +861,42 @@
                 data_cadastro: dataCadastroBR
             };
 
-            const { error: dbError } = await supa.from('alunos_ccp').upsert(dbPayload, { onConflict: 'cpf' });
+            const cpfJaExiste = todosAlunosNuvem.find(a => a.cpf.replace(/\D/g, '') === cpfLimpo);
+            let realizarUpsert = true;
 
-            if(dbError) { alert("Falha na sincronização com o banco de dados: " + dbError.message); return; }
+            // Tratamento das permissões e travas do Perfil Diretora
+            if (nivelAcessoUsuario === 'Diretora') {
+                if (alunoEditandoCpf) {
+                    // Já é uma edição, bloqueia upsert. 
+                    realizarUpsert = false;
+                    if(modoImpressao === 'nenhuma') {
+                        alert("Ação bloqueada: O perfil Diretora não pode salvar edições.");
+                        return;
+                    }
+                } else {
+                    // É um novo cadastro, verifica se CPF já existe no banco (impedindo que ela sobrescreva sem querer ao errar um CPF)
+                    if (cpfJaExiste) {
+                        alert("Ação bloqueada: Este CPF já está cadastrado no sistema. O perfil Diretora não tem permissão para sobrescrever/editar registros existentes.");
+                        return;
+                    }
+                }
+            }
 
-            // Atualiza cache de busca rápida
-            await baixarListaGlobalAlunos();
+            if (realizarUpsert) {
+                const { error: dbError } = await supa.from('alunos_ccp').upsert(dbPayload, { onConflict: 'cpf' });
+                if(dbError) { alert("Falha na sincronização com o banco de dados: " + dbError.message); return; }
+                await baixarListaGlobalAlunos();
+            }
 
             if(modoImpressao === 'ficha') document.body.classList.add('print-only-ficha');
             else if(modoImpressao === 'cart') document.body.classList.add('print-only-cart');
 
-            if(modoImpressao !== 'nenhuma') { window.print(); } else { alert(`Dados de ${dadosAluno.nome} gravados na nuvem com sucesso.`); }
+            if(modoImpressao !== 'nenhuma') { 
+                window.print(); 
+            } else { 
+                alert(`Dados de ${dadosAluno.nome} gravados na nuvem com sucesso.`); 
+            }
+            
             document.body.classList.remove('print-only-ficha', 'print-only-cart'); 
             limparFormulario();
         }
@@ -809,6 +918,10 @@
             document.getElementById('cadunico').value = "Não";
             atualizarCoresValidacao(); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            alunoEditandoCpf = null;
+            ajustarBotoesDiretora(false);
+            document.getElementById('btnActionDelete').style.display = 'none'; // Oculta botão de exclusão
         }
     </script>
 </body>

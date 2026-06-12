@@ -4,60 +4,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Módulo de Matrícula CCP - Iguaba Grande</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
-        /* --- Variáveis Globais e Estilos Base --- */
+        /* --- Variáveis Globais (Modo Escuro / Dark Mode) --- */
         :root {
-            --primary-color: #004494;
-            --secondary-color: #28a745;
-            --bg-color: #dbe9f4;
-            --card-bg: #eaf4fc;
-            --text-color: #333333;
-            --border-color: #b3cce6;
-            --invalid-bg: #ffe6e6;
-            --invalid-border: #ff6666;
-            --valid-bg: #e6ffe6;
-            --valid-border: #66cc66;
+            --primary-color: #3b82f6; 
+            --secondary-color: #10b981; 
+            --bg-color: #0f172a; 
+            --card-bg: #1e293b; 
+            --bg-input: #334155; 
+            --text-color: #f8fafc; 
+            --border-color: #334155; 
+            --invalid-bg: rgba(239, 68, 68, 0.15);
+            --invalid-border: #ef4444;
+            --valid-bg: rgba(16, 185, 129, 0.15);
+            --valid-border: #10b981;
         }
 
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 15px; color: var(--text-color); }
-        
-        .panel { background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 68, 148, 0.1); max-width: 1000px; margin: auto; border: 1px solid #cce0f5; }
+
+        /* --- Paineis Gerais --- */
+        .panel { background: var(--card-bg); padding: 30px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); max-width: 1000px; margin: auto; border: 1px solid var(--border-color); }
         .form-panel { background: var(--card-bg); }
 
         h2 { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; font-size: 22px; }
-        
+        h3 { color: var(--text-color); font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+
+        /* --- Formulários --- */
         .form-group { margin-bottom: 18px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #444; }
-        input[type="text"], input[type="date"], input[type="file"], select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; background-color: #ffffff; }
-        input[readonly] { background-color: #f0f0f0; cursor: not-allowed; color: #555; font-weight: bold; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #cbd5e1; }
+        input[type="text"], input[type="date"], input[type="file"], select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: all 0.3s; background-color: var(--bg-input); color: var(--text-color); }
+        input[readonly] { background-color: var(--bg-color); cursor: not-allowed; color: #94a3b8; font-weight: bold; }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); border-color: var(--primary-color); outline: none; }
+        
         .input-invalid { background-color: var(--invalid-bg) !important; border-color: var(--invalid-border) !important; }
         .input-valid { background-color: var(--valid-bg) !important; border-color: var(--valid-border) !important; }
         
         .row { display: flex; gap: 20px; }
         .col { flex: 1; }
 
-        /* Grade de Cursos */
-        .cursos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; background: #ffffff; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; }
-        .curso-item { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 6px; }
-        .curso-item label { display: flex; align-items: center; font-weight: bold; font-size: 13px; margin: 0; cursor: pointer; color: #004494; }
-        .curso-item input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
-        .turma-select { display: none; margin-top: 8px; font-size: 12px; padding: 6px; width: 100%; border: 1px solid #ccc; border-radius: 4px; background: #fff;}
+        /* Grade de Cursos Dinâmica */
+        .cursos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; background: var(--bg-color); padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; }
+        .curso-item { background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; }
+        .curso-item label { display: flex; align-items: center; font-weight: bold; font-size: 13px; margin: 0; cursor: pointer; color: var(--primary-color); }
+        .curso-item input[type="checkbox"] { margin-right: 8px; width: auto; transform: scale(1.2); }
+        .turma-select { display: none; margin-top: 8px; font-size: 12px; padding: 6px; width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-input); color: var(--text-color);}
         
-        /* Botões */
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 25px; border-top: 1px solid #b3cce6; padding-top: 20px; }
-        button { background-color: var(--primary-color); color: white; border: none; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: 600; font-size: 14px; }
-        button:hover { background-color: #003370; }
-        .btn-admin { background-color: #555; }
-        .btn-sec { background-color: #0066cc; }
-        .btn-cancel { background-color: #d9534f; grid-column: span 2; }
+        /* --- Botões --- */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        button { padding: 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background-color 0.3s; }
+        .btn-print-all { background-color: #f8fafc; color: #0f172a; }
+        .btn-print-all:hover { background-color: #cbd5e1; }
+        .btn-admin { background-color: #475569; color: white; }
+        .btn-admin:hover { background-color: #334155; }
+        .btn-sec { background-color: #0284c7; color: white; }
+        .btn-sec:hover { background-color: #0369a1; }
+        .btn-cancel { background-color: #ef4444; color: white; grid-column: span 2; }
+        .btn-cancel:hover { background-color: #dc2626; }
 
-        /* --- Estilos de Impressão --- */
+        /* --- Estilos da Impressão Direcionada (Alta Fidelidade Alva) --- */
         #print-area { display: none; }
         
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            body { background: white; margin: 0; padding: 0; }
+            body { background: white !important; margin: 0; padding: 0; color: #000 !important; }
             .no-print { display: none !important; }
             #print-area { display: block; width: 100%; font-family: Arial, sans-serif; font-size: 12px; color: #000; }
             
@@ -65,64 +76,70 @@
             body.print-only-cart #print-ficha { display: none !important; }
             body.print-only-cart .page-break { page-break-before: auto !important; padding-top: 0 !important; }
 
-            /* Ficha de Cadastro */
             .header-print { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
             .header-content { flex-grow: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-            #header-text-default h1 { font-size: 16px; margin: 0; text-transform: uppercase; }
-            #header-text-default h2 { font-size: 14px; margin: 5px 0 0 0; border: none; font-weight: normal; }
+            #header-text-default h1 { font-size: 16px; margin: 0; text-transform: uppercase; color: #000; }
+            #header-text-default h2 { font-size: 14px; margin: 5px 0 0 0; border: none; font-weight: normal; color: #000;}
             .photo-box { width: 3cm; height: 4cm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
             .photo-box img { max-width: 100%; max-height: 100%; object-fit: cover; }
             
-            .section-title { background-color: #f0f0f0; border: 1px solid #000; padding: 5px; font-weight: bold; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; }
+            .section-title { background-color: #f0f0f0; border: 1px solid #000; padding: 5px; font-weight: bold; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; color: #000;}
             .data-row { display: flex; border-bottom: 1px solid #ccc; padding: 4px 0; }
             .data-col { flex: 1; padding-right: 10px; }
             .data-label { font-weight: bold; display: block; font-size: 10px; color: #555; }
-            .data-value { display: block; font-size: 13px; margin-top: 2px; min-height: 15px; }
+            .data-value { display: block; font-size: 13px; margin-top: 2px; min-height: 15px; color: #000;}
             
             .curso-print-item { display: flex; align-items: center; border-bottom: 1px dashed #999; padding: 6px 0; }
             .curso-print-nome { font-weight: bold; font-size: 12px; width: 45%; }
             .curso-print-status { font-size: 11px; width: 20%; }
             .curso-print-motivo { font-size: 11px; flex-grow: 1; display: flex; align-items: flex-end; }
             .linha-motivo { border-bottom: 1px solid #000; flex-grow: 1; margin-left: 5px; height: 12px; }
+
             .signatures { margin-top: 40px; display: flex; justify-content: space-between; text-align: center; }
             .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 5px; }
             .termo { font-size: 10px; text-align: center; margin-top: 25px; font-style: italic; }
 
-            /* Carteirinha */
             .page-break { page-break-before: always; padding-top: 20px; }
             .instrucao-corte { font-size: 10px; color: #555; text-align: center; margin-bottom: 15px; font-style: italic; }
+            
             .carteirinha-container { width: 17cm; height: 6.5cm; border: 2px solid #333; border-radius: 6px; margin: 0 auto; display: flex; box-sizing: border-box; background-color: #fff; overflow: hidden; }
             .carteirinha-lado { width: 50%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
             .carteirinha-frente { border-right: 1px dashed #999; }
+            
             .c-cabecalho { background-color: #004494; color: #ffffff; text-align: center; padding: 6px 0; }
             .c-cabecalho h3 { margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; }
             .c-cabecalho h4 { margin: 1px 0 0 0; font-size: 9px; font-weight: normal; color: #eaf4fc; }
+            
             .c-body-frente { display: flex; padding: 8px; height: calc(100% - 30px); box-sizing: border-box; gap: 10px; }
-            .c-coluna-foto { display: flex; flex-direction: column; align-items: center; width: 3cm; }
-            .c-foto-mini { width: 3cm; height: 4cm; border: 1px solid #999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            .c-coluna-foto { display: flex; flex-direction: column; align-items: center; width: 3cm; flex-shrink: 0; }
+            .c-foto-mini { width: 3cm; height: 4cm; border: 1px solid #999; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center; overflow: hidden; }
             .c-foto-mini img { width: 100%; height: 100%; object-fit: cover; }
-            .c-validade { font-size: 8px; font-weight: bold; color: #444; margin-top: 4px; }
+            .c-validade { font-size: 8px; font-weight: bold; color: #444; margin-top: 4px; text-align: center; }
+            
             .c-coluna-dados { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
             .c-nome { font-size: 13px; font-weight: 900; color: #000; text-transform: uppercase; line-height: 1.1; margin-bottom: 6px; }
             .c-docs { display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px dotted #ccc; padding-bottom: 4px; }
+            .c-doc-item { display: flex; flex-direction: column; }
             .c-lbl { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; }
             .c-val { font-size: 11px; font-weight: bold; color: #222; }
             .c-cursos-box { margin-bottom: 6px; flex-grow: 1; }
             .c-cursos-txt { font-size: 10px; font-weight: bold; color: #004494; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
             .c-alerta-box { background-color: #fff0f0; border: 1px solid #ffcccc; border-radius: 4px; padding: 6px; margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
-            .c-alerta-header { display: flex; justify-content: space-between; align-items: center; }
+            .c-alerta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; border-bottom: 1px solid #ffcccc; padding-bottom: 2px;}
             .c-alerta-titulo { font-size: 9px; font-weight: bold; color: #cc0000; }
             .c-badge-sangue { background-color: #cc0000; color: white; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; }
-            .c-alerta-linha { font-size: 9px; color: #333; display: flex; }
+            .c-alerta-linha { font-size: 9px; color: #333; line-height: 1.1; display: flex; }
             .c-alerta-lbl { font-weight: bold; width: 55px; flex-shrink: 0; }
             .c-alerta-val { font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
             .c-body-verso { padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: calc(100% - 30px); box-sizing: border-box; }
             .c-assinaturas { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; margin-bottom: 15px;}
-            .c-ass-bloco { width: 90%; text-align: center;}
+            .c-ass-bloco { width: 90%; text-align: center; position: relative;}
             .c-ass-linha-container { height: 1.5cm; display: flex; align-items: flex-end; justify-content: center; position: relative; margin-bottom: 3px;}
-            .c-ass-linha { border-bottom: 1px solid #000; width: 100%; position: absolute; bottom: 0; }
+            .c-ass-linha { border-bottom: 1px solid #000; width: 100%; position: absolute; bottom: 0; z-index: 0; }
             .c-ass-img { max-height: 100%; max-width: 100%; z-index: 1; position: relative; }
-            .c-ass-texto { font-size: 10px; color: #111; font-weight: bold;}
+            .c-ass-texto { font-size: 10px; color: #111; font-weight: bold; line-height: 1.2;}
             .c-ass-subtexto { font-size: 9px; color: #444;}
             .c-barcode-container { text-align: center; margin-top: auto; width: 100%;}
             .c-barcode-container svg { max-height: 55px; width: 95%; } 
@@ -134,10 +151,10 @@
     <div id="tab-cadastro" class="tab-content active">
         <div class="panel form-panel no-print">
             
-            <div style="background-color: #fcfcfc; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+            <div style="background-color: var(--bg-color); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 25px;">
                 <label style="color: var(--primary-color); font-weight: bold; margin-bottom: 8px;">🔍 Consultar / Editar Matrícula</label>
                 <div class="row">
-                    <input type="text" id="inputBuscaCpf" list="lista-alunos-busca" placeholder="Digite o Nome ou CPF do aluno..." style="flex: 2; border: 2px solid var(--primary-color);">
+                    <input type="text" id="inputBuscaCpf" list="lista-alunos-busca" placeholder="Digite o Nome ou CPF do aluno..." style="flex: 2; border: 1px solid var(--primary-color);">
                     <datalist id="lista-alunos-busca"></datalist>
                     <button type="button" class="btn-admin" onclick="buscarCandidato()" style="flex: 1; margin-top: 0;">Buscar Aluno</button>
                 </div>
@@ -259,9 +276,9 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="background: #e1eefc; padding: 15px; border-radius: 8px; border: 1px solid var(--primary-color);">
+                <div class="form-group" style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--primary-color);">
                     <label style="color: var(--primary-color); font-size: 16px;">📚 Curso(s) e Turma(s) Matriculada(s)</label>
-                    <p style="font-size: 12px; margin-top: 0; color: #555;">Selecione o curso e em seguida a Turma/Horário oficial desejada.</p>
+                    <p style="font-size: 12px; margin-top: 0; color: #94a3b8;">Selecione o curso e em seguida a Turma/Horário oficial desejada.</p>
                     <div class="cursos-grid" id="grid-cursos"></div>
                 </div>
 
@@ -303,7 +320,7 @@
                 </div>
 
                 <div class="action-grid">
-                    <button type="button" onclick="gerarImpressao('ambas')" style="background-color: #000;">🖨️ Salvar e Imprimir Ambos</button>
+                    <button type="button" class="btn-print-all" onclick="gerarImpressao('ambas')">🖨️ Salvar e Imprimir Ambos</button>
                     <button type="button" class="btn-admin" onclick="gerarImpressao('nenhuma')">💾 Apenas Salvar (Sem Imprimir)</button>
                     <button type="button" class="btn-sec" onclick="gerarImpressao('ficha')">📄 Salvar e Imprimir Só Ficha</button>
                     <button type="button" class="btn-sec" onclick="gerarImpressao('cart')">🪪 Salvar e Imprimir Só Carteirinha</button>
@@ -401,10 +418,13 @@
     </div>
 
     <script>
-        // Banco de dados em cache local
-        let alunosCadastrados = JSON.parse(localStorage.getItem('ccp_alunos')) || [];
+        // --- Conexão Ativa com o Supabase ---
+        const supabaseUrl = 'https://qdmityjaqwvcesejsexh.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbWl0eWphcXd2Y2VzZWpzZXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2ODU4NzAsImV4cCI6MjA5NDI2MTg3MH0.cqmB5B-lTaC1TaQwXuOlWjKjlnTufaGq6ndlm3K1uvI';
+        const supa = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let alunosCadastrados = [];
         
-        // Mapeamento institucional imutável de Cursos e Turmas
         const MAPA_CURSOS = {
             "REFLEXOLOGIA PODAL": ["Turma 01 (TARDE - Terça)", "Turma 02 (NOITE - Terça)", "Pendente/Lista de Espera"],
             "MASSOTERAPIA": ["Turma 01 (TARDE - Segunda)", "Turma 02 (NOITE - Segunda)", "Pendente/Lista de Espera"],
@@ -421,7 +441,6 @@
             "BARTENDER": ["Turma 01 (TARDE - Quinta)", "Turma 02 (MANHÃ - Sexta)", "Pendente/Lista de Espera"]
         };
 
-        // Renderização Dinâmica da Grade Curricular no Formulário
         function renderGradeCursos() {
             const grid = document.getElementById('grid-cursos');
             let html = '';
@@ -441,14 +460,13 @@
             const select = document.getElementById(`turma-${curso}`);
             const div = document.getElementById(`item-${curso}`);
             if(checkbox.checked) {
-                select.style.display = 'block'; div.style.background = '#e6f2ff'; div.style.borderColor = 'var(--primary-color)';
+                select.style.display = 'block'; div.style.background = 'rgba(59, 130, 246, 0.1)'; div.style.borderColor = 'var(--primary-color)';
             } else {
-                select.style.display = 'none'; select.value = ''; div.style.background = '#f9f9f9'; div.style.borderColor = '#ddd';
+                select.style.display = 'none'; select.value = ''; div.style.background = 'var(--card-bg)'; div.style.borderColor = 'var(--border-color)';
             }
             atualizarCoresValidacao();
         }
 
-        // Sistema de Datalist para Autocompletar a Busca Interna
         function atualizarDatalistBusca() {
             const datalist = document.getElementById('lista-alunos-busca');
             datalist.innerHTML = '';
@@ -459,27 +477,72 @@
             });
         }
 
-        // Execuções Init ao Carregar o DOM
-        document.addEventListener('DOMContentLoaded', () => {
+        // Sincronização de Entrada de Dados com a Nuvem
+        async function carregarAlunosRemotos() {
+            const msgBox = document.getElementById('busca-msg');
+            msgBox.innerText = "Sincronizando com o Supabase..."; msgBox.style.color = "var(--primary-color)";
+            
+            const { data, error } = await supa.from('alunos_ccp').select('*');
+            if (error) {
+                msgBox.innerText = "Erro ao conectar à nuvem."; msgBox.style.color = "#ef4444";
+                return;
+            }
+            
+            if (data) {
+                alunosCadastrados = data.map(item => ({
+                    dataCadastro: item.data_cadastro || item.dataCadastro,
+                    nome: item.nome,
+                    nascimento: item.nascimento,
+                    sexo: item.sexo,
+                    cpf: item.cpf,
+                    telefone: item.telefone,
+                    email: item.email,
+                    cep: item.cep,
+                    cidade: item.cidade,
+                    logradouro: item.logradouro,
+                    bairro: item.bairro,
+                    referencia: item.referencia,
+                    escolaridade: item.escolaridade,
+                    cursos: item.cursos,
+                    tipoSanguineo: item.tipo_sanguineo || item.tipoSanguineo,
+                    medicamento: item.medicamento,
+                    alergia: item.alergia,
+                    cadunico: item.cadunico,
+                    observacoes: item.observacoes
+                }));
+                atualizarDatalistBusca();
+                msgBox.innerText = "Banco de dados em nuvem ativo."; msgBox.style.color = "var(--secondary-color)";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
             renderGradeCursos();
             document.getElementById('dataCadastro').value = new Date().toISOString().split('T')[0];
-            atualizarDatalistBusca();
             atualizarCoresValidacao();
             
             const cabecalhoSalvo = localStorage.getItem('ccp_cabecalho');
             if(cabecalhoSalvo) document.getElementById('print-cabecalho-img').src = cabecalhoSalvo;
             const assinaturaSalva = localStorage.getItem('ccp_assinatura');
             if(assinaturaSalva) document.getElementById('print-ass-img').src = assinaturaSalva;
+
+            await carregarAlunosRemotos();
         });
 
-        // Máscaras e Formatações de Dados de Entrada
-        function aplicarMascaraCPF(v) { v = v.replace(/\D/g, ""); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2"); return v; }
+        /* --- Função da máscara de CPF (000.000.000-00) --- */
+        function aplicarMascaraCPF(v) { 
+            v = v.replace(/\D/g, ""); 
+            if (v.length > 11) v = v.substring(0, 11); 
+            v = v.replace(/(\d{3})(\d)/, "$1.$2"); 
+            v = v.replace(/(\d{3})(\d)/, "$1.$2"); 
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2"); 
+            return v; 
+        }
+
         function aplicarMascaraTelefone(v) { v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); v = v.replace(/(\d{5})(\d)/, "$1-$2"); return v; }
         function aplicarMascaraCEP(v) { v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/, "$1.$2"); v = v.replace(/\.(\d{3})(\d)/, ".$1-$2"); return v; }
         function formatarDataBR(dataISO) { if (!dataISO) return ""; const partes = dataISO.split('-'); return partes.length !== 3 ? dataISO : `${partes[2]}/${partes[1]}/${partes[0]}`; }
         function formatarDataISO(dataBR) { if(!dataBR || !dataBR.includes('/')) return dataBR; const parts = dataBR.split('/'); return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dataBR; }
 
-        // Validação Visual Dinâmica (Campos Obrigatórios)
         function atualizarCoresValidacao() {
             document.querySelectorAll('.form-valida').forEach(campo => {
                 if(campo.type === 'checkbox') return;
@@ -495,7 +558,6 @@
         document.getElementById('cadastroForm').addEventListener('input', atualizarCoresValidacao);
         document.getElementById('cadastroForm').addEventListener('change', atualizarCoresValidacao);
 
-        // Processamento de Strings Multiseleção de Cursos
         function capturarCursosFormulario() {
             const checkboxes = document.querySelectorAll('input[name="curso"]:checked');
             let stringFinal = [];
@@ -528,16 +590,15 @@
             });
         }
 
-        // Função de Busca e Ativação do Modo de Edição
         function buscarCandidato(identificadorForcado = null) {
             const msgBox = document.getElementById('busca-msg');
             let termo = identificadorForcado || document.getElementById('inputBuscaCpf').value.trim();
-            if(!termo) { msgBox.innerText = "Digite um nome ou CPF."; msgBox.style.color = "#d9534f"; return; }
+            if(!termo) { msgBox.innerText = "Digite um nome ou CPF."; msgBox.style.color = "#ef4444"; return; }
 
             let cpfLimpo = termo.replace(/\D/g, "");
             let dados = alunosCadastrados.find(a => (cpfLimpo.length > 0 && a.cpf.replace(/\D/g, "") === cpfLimpo) || a.nome.toLowerCase() === termo.toLowerCase() || `${a.nome} - ${a.cpf}` === termo);
 
-            if(!dados) { msgBox.innerText = "Aluno não encontrado."; msgBox.style.color = "#d9534f"; return; }
+            if(!dados) { msgBox.innerText = "Aluno não encontrado localmente."; msgBox.style.color = "#ef4444"; return; }
 
             document.getElementById('dataCadastro').value = formatarDataISO(dados.dataCadastro); document.getElementById('nome').value = dados.nome;
             document.getElementById('cpf').value = dados.cpf.replace(/\D/g, "").length === 11 ? aplicarMascaraCPF(dados.cpf) : dados.cpf;
@@ -555,7 +616,6 @@
             msgBox.innerText = "Modo de Edição Ativo."; msgBox.style.color = "var(--secondary-color)";
         }
 
-        // Upload de Mídia Fotográfica em Base64
         document.getElementById('fotoUpload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
@@ -565,10 +625,10 @@
             }
         });
 
-        // Rotina de Persistência, Geração do Código de Barras e Disparo do Print Direcionado
-        function gerarImpressao(modoImpressao) {
+        // Gravação Transacional Direta no Supabase (Upsert via CPF)
+        async function gerarImpressao(modoImpressao) {
             const cpfInput = document.getElementById('cpf').value;
-            if(cpfInput.trim() === '') { alert("Atenção! O preenchimento do CPF é obrigatório."); return; }
+            if(cpfInput.trim() === '' || cpfInput.length < 14) { alert("Atenção! O preenchimento do CPF completo com máscara é obrigatório."); return; }
 
             let erroTurma = false;
             document.querySelectorAll('input[name="curso"]:checked').forEach(cb => { if(!document.getElementById(`turma-${cb.value}`).value) erroTurma = true; });
@@ -603,14 +663,46 @@
             document.getElementById('c-nascimento').innerText = dataNascimentoBR; document.getElementById('c-cursos-lista').innerText = txtCursosCart;
             document.getElementById('c-sangue-badge').innerText = dadosAluno.tipoSanguineo; document.getElementById('c-alergia-cart').innerText = dadosAluno.alergia; document.getElementById('c-medicamento-cart').innerText = dadosAluno.medicamento;
 
+            // Payload para a Tabela Remota
+            const dbPayload = {
+                cpf: dadosAluno.cpf,
+                nome: dadosAluno.nome,
+                nascimento: dataNascimentoBR,
+                sexo: dadosAluno.sexo,
+                telefone: dadosAluno.telefone,
+                email: dadosAluno.email,
+                cep: dadosAluno.cep,
+                cidade: dadosAluno.cidade,
+                logradouro: dadosAluno.logradouro,
+                bairro: dadosAluno.bairro,
+                referencia: dadosAluno.referencia,
+                escolaridade: dadosAluno.escolaridade,
+                cursos: strCursosDB,
+                tipo_sanguineo: dadosAluno.tipoSanguineo,
+                cadunico: dadosAluno.cadunico,
+                alergia: dadosAluno.alergia,
+                medicamento: dadosAluno.medicamento,
+                observacoes: dadosAluno.observacoes,
+                data_cadastro: dataCadastroBR
+            };
+
+            // Envio direto para nuvem (Upsert baseado na PK CPF)
+            const { error: dbError } = await supa.from('alunos_ccp').upsert(dbPayload, { onConflict: 'cpf' });
+
+            if (dbError) {
+                alert("Falha de gravação no Supabase: " + dbError.message);
+                return;
+            }
+
+            // Atualização do cache em memória local
             const index = alunosCadastrados.findIndex(a => a.cpf === dadosAluno.cpf);
             if (index >= 0) alunosCadastrados[index] = dadosAluno; else alunosCadastrados.push(dadosAluno);
-            localStorage.setItem('ccp_alunos', JSON.stringify(alunosCadastrados)); atualizarDatalistBusca();
+            atualizarDatalistBusca();
 
             if(modoImpressao === 'ficha') document.body.classList.add('print-only-ficha');
             else if(modoImpressao === 'cart') document.body.classList.add('print-only-cart');
 
-            if(modoImpressao !== 'nenhuma') { window.print(); } else { alert(`Dados de ${dadosAluno.nome} salvos.`); }
+            if(modoImpressao !== 'nenhuma') { window.print(); } else { alert(`Dados de ${dadosAluno.nome} sincronizados com o Supabase.`); }
             document.body.classList.remove('print-only-ficha', 'print-only-cart'); limparFormulario();
         }
 

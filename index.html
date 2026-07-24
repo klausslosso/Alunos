@@ -329,6 +329,16 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- ABA DE EDIÇÃO AVANÇADA (Apenas Admin) -->
+                    <div id="admin-editar-cursos-sec" style="display: none; margin-top: 15px; padding: 15px; border: 1px dashed #ef4444; border-radius: 6px; background-color: rgba(239, 68, 68, 0.05);">
+                        <label style="color: #ef4444; font-size: 14px;">⚠️ Edição Avançada de Cursos (Exclusivo Admin)</label>
+                        <p style="font-size: 11px; margin-top: 0; color: #94a3b8; margin-bottom: 10px;">Edite a string bruta armazenada no banco para remover cursos fantasmas ou corrigir nomenclaturas. Separe os cursos com o caractere " | ".</p>
+                        <div class="row" style="align-items: center;">
+                            <input type="text" id="inputCursosRaw" style="flex: 3; border-color: #ef4444;" placeholder="Ex: PADEIRO 01 (MANHÃ) | MANICURE 02">
+                            <button type="button" class="btn-danger" style="flex: 1; padding: 10px;" onclick="salvarEdicaoCursos()">Salvar Correção</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -498,7 +508,6 @@
                         <div class="c-assinaturas">
                             <div class="c-ass-bloco">
                                 <div class="c-ass-linha-container">
-                                    <!-- Imagem Assinatura Fixa -->
                                     <img id="print-ass-img" class="c-ass-img" src="asseliz.png" alt="Assinatura">
                                     <div class="c-ass-linha"></div>
                                 </div>
@@ -527,9 +536,9 @@
         function formatarNomeCurso(textoBruto) {
             if (!textoBruto) return "";
             return textoBruto
-                .replace(/[\[\]()]/g, '')     // Remove colchetes e parênteses
-                .replace(/TURMA\s?/gi, '')    // Remove a palavra "Turma" e espaços
-                .replace(/\s+/g, ' ')         // Troca múltiplos espaços por um
+                .replace(/[\[\]()]/g, '')     
+                .replace(/TURMA\s?/gi, '')    
+                .replace(/\s+/g, ' ')         
                 .trim();
         }
 
@@ -686,6 +695,14 @@
             document.getElementById('medicamento').value = dados.medicamento || "Não";
             document.getElementById('observacoes').value = dados.observacoes || "";
 
+            // Preenche o campo de edição avançada e exibe se for Admin
+            document.getElementById('inputCursosRaw').value = dados.cursos || "";
+            if (nivelAcessoUsuario === 'Admin') {
+                document.getElementById('admin-editar-cursos-sec').style.display = 'block';
+            } else {
+                document.getElementById('admin-editar-cursos-sec').style.display = 'none';
+            }
+
             // Renderiza o Histórico de Cursos
             await renderizarHistoricoCursos(dados.cursos, dados.cpf);
             
@@ -704,6 +721,22 @@
             if (nivelAcessoUsuario === 'Admin') document.getElementById('btnActionDelete').style.display = 'block';
         }
 
+        async function salvarEdicaoCursos() {
+            if (nivelAcessoUsuario !== 'Admin' || !alunoEditandoCpf) return;
+            const novaStringRaw = document.getElementById('inputCursosRaw').value;
+            
+            if(confirm("ATENÇÃO: Confirma a alteração direta no histórico deste aluno? O histórico visual será recarregado.")) {
+                const { error } = await supa.from('alunos_ccp').update({ cursos: novaStringRaw }).eq('cpf', alunoEditandoCpf);
+                
+                if(error) {
+                    alert("Erro ao atualizar o histórico de cursos: " + error.message);
+                } else {
+                    alert("Histórico do aluno corrigido com sucesso!");
+                    await renderizarHistoricoCursos(novaStringRaw, alunoEditandoCpf);
+                }
+            }
+        }
+
         async function renderizarHistoricoCursos(cursosString, cpfAluno) {
             cursosAtuaisAluno = cursosString || ""; 
             const tbody = document.getElementById('lista-historico-cursos');
@@ -718,7 +751,6 @@
             const cursosBrutos = cursosString.split('|').map(s => s.trim()).filter(s => s !== '');
             let cursosMap = new Map();
 
-            // Deduplicação e formatação textual limpa
             for (let c of cursosBrutos) {
                 let cFormatado = formatarNomeCurso(c);
                 let chave = cFormatado.toUpperCase();
@@ -738,7 +770,6 @@
                 let freqValor = 0; let mediaValor = 0; let hasData = false; let isCursando = false;
 
                 try {
-                    // Busca data de fim de forma dinâmica nos registros originais
                     for (let orig of ct.originais) {
                         const match = orig.match(/(.*?)\s+\[(.*?)\]/);
                         if (match) {
@@ -753,7 +784,6 @@
                         }
                     }
 
-                    // Frequência via Supabase
                     const { data: presTodas } = await supa.from('presencas').select('aluno_cpf, status, data_aula').in('turma_identificador', ct.originais);
                     if (presTodas && presTodas.length > 0) {
                         const presValidas = presTodas.filter(p => p.status !== 'Cancelada');
@@ -767,7 +797,6 @@
                         }
                     }
                     
-                    // Média via Supabase
                     const { data: avals } = await supa.from('avaliacoes').select('id').in('turma_identificador', ct.originais);
                     if (avals && avals.length > 0) {
                         const avalIds = avals.map(a => a.id);
@@ -785,7 +814,6 @@
                         }
                     }
 
-                    // Cálculo de Situação
                     if (isCursando) {
                         situacaoFormatada = '<span style="color: #f59e0b;">Cursando</span>';
                     } else {
@@ -1006,7 +1034,7 @@
                 bairro: dadosAluno.bairro,
                 referencia: dadosAluno.referencia,
                 escolaridade: dadosAluno.escolaridade,
-                cursos: strCursosDB, // Conserva a string intacta original para preservar o DB
+                cursos: strCursosDB, 
                 tipo_sanguineo: dadosAluno.tipoSanguineo,
                 cadunico: dadosAluno.cadunico,
                 alergia: dadosAluno.alergia,
@@ -1065,6 +1093,10 @@
 
             // Limpa Histórico em tela
             document.getElementById('lista-historico-cursos').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px; color: var(--text-muted);">Busque um aluno para carregar o histórico.</td></tr>';
+            
+            // Oculta a aba de edição ao limpar
+            document.getElementById('inputCursosRaw').value = "";
+            document.getElementById('admin-editar-cursos-sec').style.display = 'none';
 
             atualizarCoresValidacao(); 
             window.scrollTo({ top: 0, behavior: 'smooth' });

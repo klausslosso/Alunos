@@ -45,10 +45,7 @@
         input[readonly] { background-color: var(--bg-color); cursor: not-allowed; color: #94a3b8; font-weight: bold; }
         input:focus, select:focus, textarea:focus { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); border-color: var(--primary-color); outline: none; }
         
-        select option {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
-        }
+        select option { background-color: var(--card-bg) !important; color: var(--text-color) !important; }
 
         .input-invalid { background-color: var(--invalid-bg) !important; border-color: var(--invalid-border) !important; }
         .input-valid { background-color: var(--valid-bg) !important; border-color: var(--valid-border) !important; }
@@ -56,13 +53,11 @@
         .row { display: flex; gap: 20px; }
         .col { flex: 1; }
 
-        /* Grade de Cursos Dinâmica */
-        .cursos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; background: var(--bg-color); padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; }
-        .curso-item { background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; }
-        .curso-item label { display: flex; align-items: center; font-weight: bold; font-size: 13px; margin: 0; cursor: pointer; color: var(--primary-color); }
-        .curso-item input[type="checkbox"] { margin-right: 8px; width: auto; transform: scale(1.2); }
-        .turma-select { display: none; margin-top: 8px; font-size: 12px; padding: 6px; width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-input); color: var(--text-color);}
-        
+        /* --- Tabelas de UI --- */
+        .styled-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .styled-table th { background: var(--bg-input); color: var(--text-color); font-weight: bold; padding: 10px; border-bottom: 2px solid var(--primary-color); }
+        .styled-table td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
+
         /* --- Botões --- */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         button { background-color: var(--primary-color); color: white; border: none; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background-color 0.3s; }
@@ -78,7 +73,7 @@
         .btn-cancel { background-color: #64748b; }
         .btn-cancel:hover { background-color: #475569; }
 
-        /* --- Estilos da Impressão (Fidelidade Alva) --- */
+        /* --- Estilos da Impressão --- */
         #print-area { display: none; }
         
         @media print {
@@ -88,9 +83,11 @@
             .no-print { display: none !important; }
             #print-area { display: block; width: 100%; font-family: Arial, sans-serif; font-size: 12px; color: #000; }
             
-            body.print-only-ficha #print-cart { display: none !important; }
-            body.print-only-cart #print-ficha { display: none !important; }
-            body.print-only-cart .page-break { page-break-before: auto !important; padding-top: 0 !important; }
+            /* Ocultações Lógicas de Abas */
+            body.print-only-ficha #print-cart, body.print-only-ficha #print-historico { display: none !important; }
+            body.print-only-cart #print-ficha, body.print-only-cart #print-historico { display: none !important; }
+            body.print-only-historico #print-ficha, body.print-only-historico #print-cart { display: none !important; }
+            body.print-only-cart .page-break, body.print-only-historico .page-break { page-break-before: auto !important; padding-top: 0 !important; }
 
             .header-print { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
             .header-content { flex-grow: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; }
@@ -105,12 +102,6 @@
             .data-label { font-weight: bold; display: block; font-size: 10px; color: #555; }
             .data-value { display: block; font-size: 13px; margin-top: 2px; min-height: 15px; color: #000;}
             
-            .curso-print-item { display: flex; align-items: center; border-bottom: 1px dashed #999; padding: 6px 0; }
-            .curso-print-nome { font-weight: bold; font-size: 12px; width: 45%; }
-            .curso-print-status { font-size: 11px; width: 20%; }
-            .curso-print-motivo { font-size: 11px; flex-grow: 1; display: flex; align-items: flex-end; }
-            .linha-motivo { border-bottom: 1px solid #000; flex-grow: 1; margin-left: 5px; height: 12px; }
-
             .signatures { margin-top: 40px; display: flex; justify-content: space-between; text-align: center; }
             .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 5px; }
             .termo { font-size: 10px; text-align: center; margin-top: 25px; font-style: italic; }
@@ -118,6 +109,11 @@
             .page-break { page-break-before: always; padding-top: 20px; }
             .instrucao-corte { font-size: 10px; color: #555; text-align: center; margin-bottom: 15px; font-style: italic; }
             
+            /* Tabela do Histórico */
+            .historico-table th { background-color: #f0f0f0 !important; color: #000 !important; font-weight: bold; }
+            .historico-table td { border: 1px solid #000; padding: 6px; font-size: 12px; height: 25px; vertical-align: middle; }
+            
+            /* Carteirinha */
             .carteirinha-container { width: 17cm; height: 6.5cm; border: 2px solid #333; border-radius: 6px; margin: 0 auto; display: flex; box-sizing: border-box; background-color: #fff; overflow: hidden; }
             .carteirinha-lado { width: 50%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
             .carteirinha-frente { border-right: 1px dashed #999; }
@@ -181,7 +177,7 @@
 
     <div class="container" id="main-content" style="display: none;">
         <header class="no-print">
-            <h1>MÓDULO DE MATRÍCULAS - CCP</h1>
+            <h1>MÓDULO DE MATRÍCULAS E HISTÓRICO - CCP</h1>
             <p style="color: var(--text-muted); margin: 5px 0 0 0; font-weight: 600;">Prefeitura de Iguaba Grande | Perfil: <span id="user-profile-display" style="color: var(--primary-color);"></span></p>
             <button class="btn-danger" style="margin-top: 15px; padding: 6px 12px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer;" onclick="encerrarSessao()">Terminar Sessão</button>
         </header>
@@ -189,7 +185,7 @@
         <div class="panel form-panel no-print">
             
             <div style="background-color: var(--bg-color); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 25px;">
-                <label style="color: var(--primary-color); font-weight: bold; margin-bottom: 8px;">🔍 Consultar / Editar Matrícula no Banco</label>
+                <label style="color: var(--primary-color); font-weight: bold; margin-bottom: 8px;">🔍 Consultar Matrícula no Banco</label>
                 <div class="row">
                     <input type="text" id="inputBuscaCpf" list="lista-alunos-busca" placeholder="Digite o Nome ou CPF do aluno..." style="flex: 2; border: 1px solid var(--primary-color);" oninput="aplicarMascaraBuscaTurma(this)">
                     <datalist id="lista-alunos-busca"></datalist>
@@ -198,7 +194,7 @@
                 <span id="busca-msg" style="font-size: 13px; margin-top: 6px; display:block; font-weight: bold;"></span>
             </div>
 
-            <h2>Nova Ficha de Matrícula - CCP</h2>
+            <h2>Ficha do Aluno - CCP</h2>
             <form id="cadastroForm">
                 <div class="row">
                     <div class="col form-group">
@@ -313,11 +309,25 @@
                     </div>
                 </div>
 
+                <!-- Seção: Histórico de Cursos -->
                 <div class="form-group" style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--primary-color);">
-                    <label style="color: var(--primary-color); font-size: 16px;">📚 Curso(s) e Turma(s) Disponíveis</label>
-                    <p style="font-size: 12px; margin-top: 0; color: #94a3b8;">Selecione o curso e em seguida a Turma oficial desejada (Sincronizado via Supabase).</p>
-                    <div class="cursos-grid" id="grid-cursos">
-                        <p style="font-size: 12px; color: var(--text-muted);">A consultar grelha de cursos e turmas ativas...</p>
+                    <label style="color: var(--primary-color); font-size: 16px;">📚 Histórico de Cursos e Turmas</label>
+                    <p style="font-size: 12px; margin-top: 0; color: #94a3b8;">Visualização do histórico acadêmico completo do aluno. Matrículas e edições de turmas são realizadas exclusivamente no módulo de Processo Seletivo.</p>
+                    
+                    <div style="overflow-x: auto; margin-top: 15px; background: var(--bg-color); border-radius: 6px; border: 1px solid var(--border-color);">
+                        <table class="styled-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Curso / Turma</th>
+                                    <th style="text-align: center; width: 15%;">Frequência</th>
+                                    <th style="text-align: center; width: 15%;">Média</th>
+                                    <th style="text-align: center; width: 20%;">Situação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-historico-cursos">
+                                <tr><td colspan="4" style="text-align: center; padding: 15px; color: var(--text-muted);">Busque um aluno para carregar o histórico.</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -359,10 +369,11 @@
                 </div>
 
                 <div class="action-grid">
-                    <button type="button" class="btn-print-all" id="btnActionPrintAll" onclick="gerarImpressao('ambas')">🖨️ Gravar na Nuvem e Imprimir Ambos</button>
+                    <button type="button" class="btn-print-all" id="btnActionPrintAll" onclick="gerarImpressao('todas')">🖨️ Gravar e Imprimir Tudo (3 vias)</button>
                     <button type="button" class="btn-admin" id="btnActionSave" onclick="gerarImpressao('nenhuma')">💾 Apenas Gravar na Nuvem</button>
                     <button type="button" class="btn-sec" id="btnActionPrintFicha" onclick="gerarImpressao('ficha')">📄 Gravar e Imprimir Só Ficha</button>
                     <button type="button" class="btn-sec" id="btnActionPrintCart" onclick="gerarImpressao('cart')">🪪 Gravar e Imprimir Só Carteirinha</button>
+                    <button type="button" class="btn-sec" id="btnActionPrintHist" onclick="gerarImpressao('historico')">📜 Gravar e Imprimir Só Histórico</button>
                     <button type="button" class="btn-danger" id="btnActionDelete" onclick="excluirAluno()" style="display: none;">🗑️ Excluir Definitivamente</button>
                     <button type="button" class="btn-cancel" onclick="limparFormulario()" id="btnActionCancel">❌ Limpar Dados / Cancelar</button>
                 </div>
@@ -370,7 +381,10 @@
         </div>
     </div>
 
+    <!-- Módulo de Impressão -->
     <div id="print-area">
+        
+        <!-- FICHA DE CADASTRO -->
         <div id="print-ficha">
             <div class="header-print">
                 <div class="header-content">
@@ -397,9 +411,6 @@
             <div class="section-title">Escolaridade</div>
             <div class="data-row"><div class="data-col"><span class="data-label">Nível Selecionado</span><span class="data-value" id="p-escolaridade"></span></div></div>
 
-            <div class="section-title">Cursos e Turmas Matriculadas</div>
-            <div id="p-cursos-container"></div>
-
             <div class="section-title">Informações de Saúde e Sociais</div>
             <div class="data-row"><div class="data-col"><span class="data-label">Tipo Sanguíneo</span><span class="data-value" id="p-tipoSanguineo"></span></div><div class="data-col"><span class="data-label">CadÚnico / NIS</span><span class="data-value" id="p-cadunico"></span></div></div>
             <div class="data-row"><div class="data-col"><span class="data-label">Alergias</span><span class="data-value" id="p-alergia"></span></div><div class="data-col"><span class="data-label">Medicamentos</span><span class="data-value" id="p-medicamento"></span></div></div>
@@ -411,6 +422,50 @@
             <div class="signatures"><div class="sig-line">Assinatura do Aluno</div><div class="sig-line">Assinatura do Funcionário</div></div>
         </div>
 
+        <!-- 3ª VIA: HISTÓRICO DO ALUNO -->
+        <div id="print-historico" class="page-break">
+            <div class="header-print">
+                <div class="header-content">
+                    <img id="print-cabecalho-historico" src="image_773d3e.png" alt="Cabeçalho Institucional" style="max-width: 100%; max-height: 100px; display: block; margin: 0 auto;">
+                    <div id="header-text-default">
+                        <h2 style="font-weight: bold; margin-top: 10px; font-size: 16px; text-transform: uppercase;">HISTÓRICO DO ALUNO - CCP</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Dados do Aluno</div>
+            <div class="data-row"><div class="data-col" style="flex: 2;"><span class="data-label">Nome Completo</span><span class="data-value" id="h-nome"></span></div></div>
+            <div class="data-row">
+                <div class="data-col"><span class="data-label">CPF</span><span class="data-value" id="h-cpf"></span></div>
+                <div class="data-col"><span class="data-label">Telefone</span><span class="data-value" id="h-telefone"></span></div>
+                <div class="data-col"><span class="data-label">E-mail</span><span class="data-value" id="h-email"></span></div>
+            </div>
+
+            <div class="section-title">Desempenho Acadêmico (Cursos e Turmas)</div>
+            <table class="styled-table historico-table" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #000; padding: 5px; text-align: left; font-size: 11px; width: 40%;">Curso / Turma</th>
+                        <th style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; width: 20%;">Frequência (%)</th>
+                        <th style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; width: 20%;">Média das Notas</th>
+                        <th style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; width: 20%;">Situação</th>
+                    </tr>
+                </thead>
+                <tbody id="h-cursos-tbody">
+                    <!-- Gerado pelo JS -->
+                </tbody>
+            </table>
+
+            <div class="termo" style="margin-top: 30px;">Declaramos para os devidos fins que o aluno supracitado possui os registros acadêmicos acima detalhados, sujeitos a preenchimento e verificação da coordenação.</div>
+            
+            <div style="margin-top: 60px; display: flex; justify-content: center;">
+                <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px; text-align: center; font-size: 12px; font-weight: bold;">
+                    Assinatura da Coordenação
+                </div>
+            </div>
+        </div>
+
+        <!-- CARTEIRINHA -->
         <div id="print-cart" class="page-break">
             <div class="instrucao-corte">Recorte na linha pontilhada e dobre ao meio para formar a carteirinha.</div>
             <div class="carteirinha-container">
@@ -443,7 +498,8 @@
                         <div class="c-assinaturas">
                             <div class="c-ass-bloco">
                                 <div class="c-ass-linha-container">
-                                    <img id="print-ass-img" class="c-ass-img" src="" alt="Assinatura" style="display: none;">
+                                    <!-- Imagem Assinatura Fixa -->
+                                    <img id="print-ass-img" class="c-ass-img" src="asseliz.png" alt="Assinatura">
                                     <div class="c-ass-linha"></div>
                                 </div>
                                 <div class="c-ass-texto">Elizetth dos Santos Peixoto</div><div class="c-ass-subtexto">Coordenadora do CCP</div>
@@ -464,8 +520,18 @@
         let utilizadorAtual = null;
         let nivelAcessoUsuario = null;
         let todosAlunosNuvem = [];
-        let mapaCursosDinamico = {};
-        let alunoEditandoCpf = null; // Controle dinâmico do estado do formulário
+        let alunoEditandoCpf = null; 
+        let cursosAtuaisAluno = ""; 
+
+        // --- Função de Limpeza Textual ---
+        function formatarNomeCurso(textoBruto) {
+            if (!textoBruto) return "";
+            return textoBruto
+                .replace(/[\[\]()]/g, '')     // Remove colchetes e parênteses
+                .replace(/TURMA\s?/gi, '')    // Remove a palavra "Turma" e espaços
+                .replace(/\s+/g, ' ')         // Troca múltiplos espaços por um
+                .trim();
+        }
 
         // --- Sistema de Autenticação ---
         document.addEventListener("DOMContentLoaded", async () => {
@@ -491,7 +557,6 @@
         }
 
         async function iniciarSistema() {
-            // Verifica o nível de acesso na tabela de perfis
             const { data: perfilData, error: perfilError } = await supa
                 .from('perfis') 
                 .select('nivel_acesso')
@@ -506,7 +571,6 @@
                 return;
             }
 
-            // Bloqueio rigoroso de Alunos e Instrutores no Módulo de Matrículas
             if (nivelAcessoUsuario === 'Alunos' || nivelAcessoUsuario === 'Instrutor') {
                 alert("Acesso negado: O seu perfil (" + nivelAcessoUsuario + ") não possui autorização para acessar o Módulo de Matrículas.");
                 await supa.auth.signOut();
@@ -520,23 +584,18 @@
             
             document.getElementById('dataCadastro').value = new Date().toISOString().split('T')[0];
             
-            await carregarCursosETurmas();
             await baixarListaGlobalAlunos();
             atualizarCoresValidacao();
 
-            // A imagem estática é definida pelo src agora. Caso o utilizador ainda tenha configurado outra
-            // imagem de cabeçalho pelo localStorage, mantive a linha para não quebrar fluxos anteriores, 
-            // mas o padrão passa a ser o image_773d3e.png.
             const cabecalhoSalvo = localStorage.getItem('ccp_cabecalho');
-            if(cabecalhoSalvo) document.getElementById('print-cabecalho-img').src = cabecalhoSalvo;
-            
-            const assinaturaSalva = localStorage.getItem('ccp_assinatura');
-            if(assinaturaSalva) document.getElementById('print-ass-img').src = assinaturaSalva;
+            if(cabecalhoSalvo) {
+                document.getElementById('print-cabecalho-img').src = cabecalhoSalvo;
+                document.getElementById('print-cabecalho-historico').src = cabecalhoSalvo;
+            }
         }
 
         async function encerrarSessao() { await supa.auth.signOut(); window.location.reload(); }
 
-        // Ajusta as opções visíveis para o perfil Diretora com base na interação (Novo ou Edição)
         function ajustarBotoesDiretora(somenteLeitura) {
             if(nivelAcessoUsuario !== 'Diretora') return;
             
@@ -544,76 +603,25 @@
             const btnSave = document.getElementById('btnActionSave');
             const btnPrintFicha = document.getElementById('btnActionPrintFicha');
             const btnPrintCart = document.getElementById('btnActionPrintCart');
+            const btnPrintHist = document.getElementById('btnActionPrintHist');
 
             if (!btnPrintAll || !btnSave || !btnPrintFicha || !btnPrintCart) return;
 
             if(somenteLeitura) {
-                btnPrintAll.innerText = "🖨️ Apenas Imprimir Ambos";
+                btnPrintAll.innerText = "🖨️ Apenas Imprimir Tudo (3 vias)";
                 btnSave.style.display = "none";
                 btnPrintFicha.innerText = "📄 Apenas Imprimir Ficha";
                 btnPrintCart.innerText = "🪪 Apenas Imprimir Carteirinha";
+                btnPrintHist.innerText = "📜 Apenas Imprimir Histórico";
             } else {
-                btnPrintAll.innerText = "🖨️ Gravar na Nuvem e Imprimir Ambos";
+                btnPrintAll.innerText = "🖨️ Gravar na Nuvem e Imprimir Tudo";
                 btnSave.style.display = "block";
                 btnPrintFicha.innerText = "📄 Gravar e Imprimir Só Ficha";
                 btnPrintCart.innerText = "🪪 Gravar e Imprimir Só Carteirinha";
+                btnPrintHist.innerText = "📜 Gravar e Imprimir Só Histórico";
             }
         }
 
-        // --- Integração Dinâmica de Cursos e Turmas do Supabase ---
-        async function carregarCursosETurmas() {
-            const { data: cursosData } = await supa.from('cursos').select('*').eq('status', 'Ativo').order('nome');
-            const { data: turmasData } = await supa.from('turmas').select('*').eq('status', 'Ativo').order('curso_nome');
-
-            mapaCursosDinamico = {};
-            
-            if (cursosData) {
-                cursosData.forEach(c => { mapaCursosDinamico[c.nome] = []; });
-            }
-            if (turmasData) {
-                turmasData.forEach(t => {
-                    if (mapaCursosDinamico[t.curso_nome]) {
-                        mapaCursosDinamico[t.curso_nome].push(t.identificador);
-                    }
-                });
-            }
-
-            renderGradeCursos();
-        }
-
-        function renderGradeCursos() {
-            const grid = document.getElementById('grid-cursos');
-            let html = '';
-            for(let curso in mapaCursosDinamico) {
-                html += `<div class="curso-item" id="item-${curso}">
-                    <label><input type="checkbox" name="curso" value="${curso}" onchange="toggleTurma('${curso}')"> ${curso}</label>
-                    <select class="turma-select form-valida" id="turma-${curso}">
-                        <option value="">Selecione a Turma Oficial...</option>`;
-                
-                mapaCursosDinamico[curso].forEach(turma => { 
-                    html += `<option value="${turma}">${turma}</option>`; 
-                });
-                
-                html += `<option value="Pendente/Lista de Espera">Pendente/Lista de Espera</option>`;
-                html += `</select></div>`;
-            }
-            if(html === '') { html = '<p style="color:var(--text-muted); font-size:12px;">Nenhum curso ativo localizado na nuvem.</p>'; }
-            grid.innerHTML = html;
-        }
-
-        function toggleTurma(curso) {
-            const checkbox = document.querySelector(`input[value="${curso}"]`);
-            const select = document.getElementById(`turma-${curso}`);
-            const div = document.getElementById(`item-${curso}`);
-            if(checkbox.checked) {
-                select.style.display = 'block'; div.style.background = 'rgba(59, 130, 246, 0.1)'; div.style.borderColor = 'var(--primary-color)';
-            } else {
-                select.style.display = 'none'; select.value = ''; div.style.background = 'var(--card-bg)'; div.style.borderColor = 'var(--border-color)';
-            }
-            atualizarCoresValidacao();
-        }
-
-        // --- Motor de Busca Transacional (Nuvem) ---
         function aplicarMascaraBuscaTurma(input) {
             let v = input.value;
             if (/\d/.test(v)) {
@@ -632,9 +640,7 @@
                 todosAlunosNuvem = data;
                 const dl = document.getElementById('lista-alunos-busca');
                 dl.innerHTML = '';
-                data.forEach(a => {
-                    dl.innerHTML += `<option value="${a.nome} - ${a.cpf}"></option>`;
-                });
+                data.forEach(a => { dl.innerHTML += `<option value="${a.nome} - ${a.cpf}"></option>`; });
             }
         }
 
@@ -648,20 +654,17 @@
                 cpfBusca = inputVal.split(" - ")[1].trim();
             } else {
                 let cpfLimpo = inputVal.replace(/\D/g, "");
-                if(cpfLimpo.length === 11) {
-                    cpfBusca = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-                } else {
+                if(cpfLimpo.length === 11) cpfBusca = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                else {
                     let achado = todosAlunosNuvem.find(a => a.nome.toLowerCase() === inputVal.toLowerCase());
                     if(achado) cpfBusca = achado.cpf;
                 }
             }
 
             if(!cpfBusca) { msgBox.innerText = "Aluno não encontrado no cache global."; msgBox.style.color = "#ef4444"; return; }
-
             msgBox.innerText = "A consultar a nuvem..."; msgBox.style.color = "var(--primary-color)";
             
             const { data: dados, error } = await supa.from('alunos_ccp').select('*').eq('cpf', cpfBusca).single();
-
             if(error || !dados) { msgBox.innerText = "Cadastro não localizado na base remota."; msgBox.style.color = "#ef4444"; return; }
 
             document.getElementById('dataCadastro').value = formatarDataISO(dados.data_cadastro); 
@@ -683,57 +686,141 @@
             document.getElementById('medicamento').value = dados.medicamento || "Não";
             document.getElementById('observacoes').value = dados.observacoes || "";
 
-            popularCursosNoFormulario(dados.cursos); 
+            // Renderiza o Histórico de Cursos
+            await renderizarHistoricoCursos(dados.cursos, dados.cpf);
+            
             atualizarCoresValidacao();
             
             document.getElementById('inputBuscaCpf').value = ""; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
-            alunoEditandoCpf = dados.cpf; // Guarda a referência de que estamos visualizando/editando
+            alunoEditandoCpf = dados.cpf; 
             
             if(nivelAcessoUsuario === 'Diretora') {
-                msgBox.innerText = ""; 
-                msgBox.style.color = "#f59e0b";
-                ajustarBotoesDiretora(true);
+                msgBox.innerText = ""; msgBox.style.color = "#f59e0b"; ajustarBotoesDiretora(true);
             } else {
-                msgBox.innerText = "Modo de Edição Ativo."; 
-                msgBox.style.color = "var(--secondary-color)";
+                msgBox.innerText = "Modo de Edição Ativo."; msgBox.style.color = "var(--secondary-color)";
             }
-
-            // Exibe o botão de exclusão apenas se for Admin
-            if (nivelAcessoUsuario === 'Admin') {
-                document.getElementById('btnActionDelete').style.display = 'block';
-            }
+            if (nivelAcessoUsuario === 'Admin') document.getElementById('btnActionDelete').style.display = 'block';
         }
 
-        // --- Função de Exclusão Definitiva ---
-        async function excluirAluno() {
-            if (nivelAcessoUsuario !== 'Admin') return;
-            if (!alunoEditandoCpf) return;
+        async function renderizarHistoricoCursos(cursosString, cpfAluno) {
+            cursosAtuaisAluno = cursosString || ""; 
+            const tbody = document.getElementById('lista-historico-cursos');
+            
+            if (!cursosString || cursosString.trim() === '') {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px; color: var(--text-muted);">Nenhum curso registrado no histórico acadêmico.</td></tr>';
+                return;
+            }
 
-            if(confirm("ATENÇÃO: Deseja realmente excluir definitivamente o cadastro deste aluno?\nEsta ação não pode ser desfeita.")) {
-                const { error } = await supa.from('alunos_ccp').delete().eq('cpf', alunoEditandoCpf);
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px; color: var(--primary-color);">Calculando histórico, aguarde...</td></tr>';
+            
+            const cursosBrutos = cursosString.split('|').map(s => s.trim()).filter(s => s !== '');
+            let cursosMap = new Map();
+
+            // Deduplicação e formatação textual limpa
+            for (let c of cursosBrutos) {
+                let cFormatado = formatarNomeCurso(c);
+                let chave = cFormatado.toUpperCase();
                 
-                if(error) {
-                    alert("Erro ao excluir cadastro: " + error.message);
+                if (!cursosMap.has(chave)) {
+                    cursosMap.set(chave, { formatado: cFormatado, originais: [c] });
                 } else {
-                    alert("Cadastro excluído com sucesso do banco de dados.");
-                    limparFormulario();
-                    await baixarListaGlobalAlunos();
+                    cursosMap.get(chave).originais.push(c);
                 }
             }
+
+            const cursosUnificados = Array.from(cursosMap.values());
+            let html = '';
+
+            for (const ct of cursosUnificados) {
+                let freqFormatada = '-'; let mediaFormatada = '-'; let situacaoFormatada = '';
+                let freqValor = 0; let mediaValor = 0; let hasData = false; let isCursando = false;
+
+                try {
+                    // Busca data de fim de forma dinâmica nos registros originais
+                    for (let orig of ct.originais) {
+                        const match = orig.match(/(.*?)\s+\[(.*?)\]/);
+                        if (match) {
+                            let nomeConsulta = match[1].trim();
+                            let identConsulta = match[2].replace(/TURMA\s?/gi, '').trim();
+                            
+                            const { data: turmaData } = await supa.from('turmas').select('data_fim').eq('curso_nome', nomeConsulta).eq('identificador', identConsulta).single();
+                            if (turmaData && turmaData.data_fim) {
+                                const dataFim = new Date(turmaData.data_fim + 'T23:59:59-03:00');
+                                if (new Date() <= dataFim) isCursando = true;
+                            }
+                        }
+                    }
+
+                    // Frequência via Supabase
+                    const { data: presTodas } = await supa.from('presencas').select('aluno_cpf, status, data_aula').in('turma_identificador', ct.originais);
+                    if (presTodas && presTodas.length > 0) {
+                        const presValidas = presTodas.filter(p => p.status !== 'Cancelada');
+                        const totalAulas = [...new Set(presValidas.map(p => p.data_aula))].length;
+                        const presAluno = presValidas.filter(p => p.aluno_cpf === cpfAluno && ['P', 'A', 'SE', 'FJ'].includes(p.status)).length;
+                        
+                        if (totalAulas > 0) {
+                            freqValor = Math.round((presAluno / totalAulas) * 100);
+                            freqFormatada = freqValor + '%';
+                            hasData = true;
+                        }
+                    }
+                    
+                    // Média via Supabase
+                    const { data: avals } = await supa.from('avaliacoes').select('id').in('turma_identificador', ct.originais);
+                    if (avals && avals.length > 0) {
+                        const avalIds = avals.map(a => a.id);
+                        const { data: notas } = await supa.from('notas_avaliacoes').select('avaliacao_id, nota, faltou').in('avaliacao_id', avalIds).eq('aluno_cpf', cpfAluno);
+                        
+                        if (notas && notas.length > 0) {
+                            const avalsLancadas = [...new Set(notas.map(n => n.avaliacao_id))].length;
+                            let soma = 0;
+                            notas.forEach(n => { soma += (n.faltou || !n.nota) ? 0 : parseFloat(n.nota); });
+                            if (avalsLancadas > 0) {
+                                mediaValor = soma / avalsLancadas;
+                                mediaFormatada = mediaValor.toFixed(1);
+                                hasData = true;
+                            }
+                        }
+                    }
+
+                    // Cálculo de Situação
+                    if (isCursando) {
+                        situacaoFormatada = '<span style="color: #f59e0b;">Cursando</span>';
+                    } else {
+                        if (hasData && mediaFormatada !== '-' && freqFormatada !== '-') {
+                            if (mediaValor >= 50 && freqValor >= 75) {
+                                situacaoFormatada = '<span style="color: var(--secondary-color);">Aprovado</span>';
+                            } else {
+                                situacaoFormatada = '<span style="color: #ef4444;">Reprovado</span>';
+                            }
+                        } else {
+                             situacaoFormatada = '<span style="color: var(--text-muted);">Pendente</span>';
+                        }
+                    }
+                } catch(e) { console.error("Falha ao puxar histórico do grupo de turmas: " + ct.formatado); }
+
+                html += `<tr>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-color); font-weight: bold; color: var(--primary-color);">${ct.formatado}</td>
+                    <td style="text-align: center; padding: 10px; border-bottom: 1px solid var(--border-color);">${freqFormatada}</td>
+                    <td style="text-align: center; padding: 10px; border-bottom: 1px solid var(--border-color);">${mediaFormatada}</td>
+                    <td style="text-align: center; padding: 10px; border-bottom: 1px solid var(--border-color); font-weight: bold; text-transform: uppercase;">${situacaoFormatada}</td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
         }
 
-        // --- Funções de Validação e Formatação ---
-        function aplicarMascaraCPF(v) { 
-            v = v.replace(/\D/g, ""); 
-            if (v.length > 11) v = v.substring(0, 11); 
-            v = v.replace(/(\d{3})(\d)/, "$1.$2"); 
-            v = v.replace(/(\d{3})(\d)/, "$1.$2"); 
-            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2"); 
-            return v; 
+        async function excluirAluno() {
+            if (nivelAcessoUsuario !== 'Admin' || !alunoEditandoCpf) return;
+            if(confirm("ATENÇÃO: Deseja realmente excluir definitivamente o cadastro deste aluno? Esta ação não pode ser desfeita.")) {
+                const { error } = await supa.from('alunos_ccp').delete().eq('cpf', alunoEditandoCpf);
+                if(error) alert("Erro ao excluir cadastro: " + error.message);
+                else { alert("Cadastro excluído com sucesso do banco de dados."); limparFormulario(); await baixarListaGlobalAlunos(); }
+            }
         }
 
+        function aplicarMascaraCPF(v) { v = v.replace(/\D/g, ""); if (v.length > 11) v = v.substring(0, 11); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2"); return v; }
         function aplicarMascaraTelefone(v) { v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); v = v.replace(/(\d{5})(\d)/, "$1-$2"); return v; }
         function aplicarMascaraCEP(v) { v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/, "$1.$2"); v = v.replace(/\.(\d{3})(\d)/, ".$1-$2"); return v; }
         function formatarDataBR(dataISO) { if (!dataISO) return ""; const partes = dataISO.split('-'); return partes.length !== 3 ? dataISO : `${partes[2]}/${partes[1]}/${partes[0]}`; }
@@ -741,50 +828,12 @@
 
         function atualizarCoresValidacao() {
             document.querySelectorAll('.form-valida').forEach(campo => {
-                if(campo.type === 'checkbox') return;
-                if(campo.classList.contains('turma-select')) {
-                    const curso = campo.id.split('-')[1];
-                    const checkbox = document.querySelector(`input[value="${curso}"]`);
-                    if(!checkbox || !checkbox.checked) { campo.classList.remove('input-invalid', 'input-valid'); return; }
-                }
                 if (campo.value.trim() === '') { campo.classList.add('input-invalid'); campo.classList.remove('input-valid'); }
                 else { campo.classList.add('input-valid'); campo.classList.remove('input-invalid'); }
             });
         }
         document.getElementById('cadastroForm').addEventListener('input', atualizarCoresValidacao);
         document.getElementById('cadastroForm').addEventListener('change', atualizarCoresValidacao);
-
-        function capturarCursosFormulario() {
-            const checkboxes = document.querySelectorAll('input[name="curso"]:checked');
-            let stringFinal = [];
-            checkboxes.forEach(cb => {
-                const curso = cb.value;
-                const turma = document.getElementById(`turma-${curso}`).value || "Não Informado";
-                stringFinal.push(`${curso} [${turma}]`);
-            });
-            return stringFinal.join(' | ');
-        }
-
-        function popularCursosNoFormulario(cursosString) {
-            document.querySelectorAll('input[name="curso"]').forEach(cb => { cb.checked = false; toggleTurma(cb.value); });
-            if(!cursosString) return;
-            const itens = cursosString.split('|').map(s => s.trim());
-            itens.forEach(item => {
-                let curso = item; let turma = "Pendente/Lista de Espera";
-                const match = item.match(/(.*?) \[(.*?)\]/);
-                if(match) { curso = match[1].trim(); turma = match[2].trim(); }
-
-                const cb = document.querySelector(`input[value="${curso.toUpperCase()}"]`);
-                if(cb) {
-                    cb.checked = true; toggleTurma(curso.toUpperCase());
-                    const sel = document.getElementById(`turma-${curso.toUpperCase()}`);
-                    if(sel) {
-                        let optionExists = Array.from(sel.options).some(opt => opt.value === turma);
-                        sel.value = optionExists ? turma : "Pendente/Lista de Espera";
-                    }
-                }
-            });
-        }
 
         document.getElementById('fotoUpload').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -795,14 +844,10 @@
             }
         });
 
-        // --- Transação Direta Supabase (Upsert e Impressão) ---
+        // --- Transação Direta Supabase (Upsert e Impressão Dinâmica) ---
         async function gerarImpressao(modoImpressao) {
             const cpfInput = document.getElementById('cpf').value;
             if(cpfInput.trim() === '' || cpfInput.length < 14) { alert("Atenção! O preenchimento completo do CPF é obrigatório."); return; }
-
-            let erroTurma = false;
-            document.querySelectorAll('input[name="curso"]:checked').forEach(cb => { if(!document.getElementById(`turma-${cb.value}`).value) erroTurma = true; });
-            if(erroTurma) { alert("Marcou um curso, mas esqueceu de selecionar a Turma."); return; }
 
             const camposTextuais = ['nome', 'sexo', 'cpf', 'telefone', 'email', 'cep', 'cidade', 'logradouro', 'bairro', 'referencia', 'escolaridade', 'tipoSanguineo', 'medicamento', 'alergia', 'cadunico', 'observacoes'];
             let dadosAluno = {};
@@ -817,19 +862,36 @@
             document.getElementById('p-dataCadastro').innerText = dataCadastroBR; 
             document.getElementById('p-nascimento').innerText = dataNascimentoBR;
 
+            // Dados do Histórico do Aluno
+            document.getElementById('h-nome').innerText = dadosAluno.nome;
+            document.getElementById('h-cpf').innerText = dadosAluno.cpf;
+            document.getElementById('h-telefone').innerText = dadosAluno.telefone || '-';
+            document.getElementById('h-email').innerText = dadosAluno.email || '-';
+
             const cpfLimpo = dadosAluno.cpf.replace(/\D/g, '');
             if(cpfLimpo.length > 0) JsBarcode("#barcode", cpfLimpo, { format: "CODE128", width: 1.5, height: 50, displayValue: true, fontSize: 13, margin: 0 });
 
-            let htmlCursosFicha = ''; let txtCursosCart = ''; const strCursosDB = capturarCursosFormulario();
+            let strCursosDB = cursosAtuaisAluno || "";
             
-            if(strCursosDB === '') {
-                htmlCursosFicha = '<div class="data-row"><div class="data-col">Nenhum curso.</div></div>'; txtCursosCart = 'Nenhum curso';
-            } else {
-                strCursosDB.split(' | ').forEach(c => { htmlCursosFicha += `<div class="curso-print-item"><div class="curso-print-nome">${c}</div><div class="curso-print-status">Concluiu? ( ) Sim &nbsp; ( ) Não</div><div class="curso-print-motivo">Motivo: <div class="linha-motivo"></div></div></div>`; });
-                txtCursosCart = strCursosDB;
+            // Deduplicação e formatação para impressão na carteirinha
+            const cursosBrutos = strCursosDB.split('|').map(s => s.trim()).filter(s => s !== '');
+            let cursosMap = new Map();
+            let textosFormatadosCarteirinha = [];
+
+            for (let c of cursosBrutos) {
+                let cFormatado = formatarNomeCurso(c);
+                let chave = cFormatado.toUpperCase();
+                
+                if (!cursosMap.has(chave)) {
+                    cursosMap.set(chave, { formatado: cFormatado, originais: [c] });
+                    textosFormatadosCarteirinha.push(cFormatado);
+                } else {
+                    cursosMap.get(chave).originais.push(c);
+                }
             }
 
-            document.getElementById('p-cursos-container').innerHTML = htmlCursosFicha; 
+            let txtCursosCart = textosFormatadosCarteirinha.length === 0 ? 'Nenhum curso' : textosFormatadosCarteirinha.join(' | ');
+            
             document.getElementById('c-nome').innerText = dadosAluno.nome; 
             document.getElementById('c-cpf').innerText = dadosAluno.cpf;
             document.getElementById('c-nascimento').innerText = dataNascimentoBR; 
@@ -838,7 +900,99 @@
             document.getElementById('c-alergia-cart').innerText = dadosAluno.alergia; 
             document.getElementById('c-medicamento-cart').innerText = dadosAluno.medicamento;
 
-            // Payload Supabase
+            // COMPILAR DADOS DA 3ª VIA (HISTÓRICO IMPRESSO)
+            let htmlCursosHist = '';
+            const cursosUnificados = Array.from(cursosMap.values());
+            
+            if (cursosUnificados.length === 0) {
+                htmlCursosHist = '<tr><td colspan="4" style="text-align: center; height: 35px; color: #555;">Nenhum curso matriculado.</td></tr>';
+            } else {
+                document.getElementById('h-cursos-tbody').innerHTML = '<tr><td colspan="4" style="text-align: center;">Calculando histórico, aguarde...</td></tr>';
+                
+                for(const ct of cursosUnificados) {
+                    let freqFormatada = ''; let mediaFormatada = ''; let situacaoFormatada = '';
+                    let freqValor = 0; let mediaValor = 0; let hasData = false; let isCursando = false;
+                    
+                    if(modoImpressao === 'historico' || modoImpressao === 'todas') {
+                        try {
+                            for (let orig of ct.originais) {
+                                const match = orig.match(/(.*?)\s+\[(.*?)\]/);
+                                if (match) {
+                                    let nomeConsulta = match[1].trim();
+                                    let identConsulta = match[2].replace(/TURMA\s?/gi, '').trim();
+                                    
+                                    const { data: turmaData } = await supa.from('turmas').select('data_fim').eq('curso_nome', nomeConsulta).eq('identificador', identConsulta).single();
+                                    if (turmaData && turmaData.data_fim) {
+                                        const dataFim = new Date(turmaData.data_fim + 'T23:59:59-03:00');
+                                        if (new Date() <= dataFim) isCursando = true;
+                                    }
+                                }
+                            }
+
+                            // Frequência
+                            const { data: presTodas } = await supa.from('presencas').select('aluno_cpf, status, data_aula').in('turma_identificador', ct.originais);
+                            if (presTodas && presTodas.length > 0) {
+                                const presValidas = presTodas.filter(p => p.status !== 'Cancelada');
+                                const totalAulas = [...new Set(presValidas.map(p => p.data_aula))].length;
+                                const presAluno = presValidas.filter(p => p.aluno_cpf === dadosAluno.cpf && ['P', 'A', 'SE', 'FJ'].includes(p.status)).length;
+                                
+                                if (totalAulas > 0) {
+                                    freqValor = Math.round((presAluno / totalAulas) * 100);
+                                    freqFormatada = freqValor + '%';
+                                    hasData = true;
+                                }
+                            }
+                            
+                            // Média
+                            const { data: avals } = await supa.from('avaliacoes').select('id').in('turma_identificador', ct.originais);
+                            if (avals && avals.length > 0) {
+                                const avalIds = avals.map(a => a.id);
+                                const { data: notas } = await supa.from('notas_avaliacoes').select('avaliacao_id, nota, faltou').in('avaliacao_id', avalIds).eq('aluno_cpf', dadosAluno.cpf);
+                                
+                                if (notas && notas.length > 0) {
+                                    const avalsLancadas = [...new Set(notas.map(n => n.avaliacao_id))].length;
+                                    let soma = 0;
+                                    notas.forEach(n => { soma += (n.faltou || !n.nota) ? 0 : parseFloat(n.nota); });
+                                    if (avalsLancadas > 0) {
+                                        mediaValor = soma / avalsLancadas;
+                                        mediaFormatada = mediaValor.toFixed(1);
+                                        hasData = true;
+                                    }
+                                }
+                            }
+
+                            // Situação
+                            if (isCursando) {
+                                situacaoFormatada = 'Cursando';
+                            } else {
+                                if (hasData && mediaFormatada !== '' && freqFormatada !== '') {
+                                    if (mediaValor >= 50 && freqValor >= 75) {
+                                        situacaoFormatada = 'Aprovado';
+                                    } else {
+                                        situacaoFormatada = 'Reprovado';
+                                    }
+                                } else {
+                                     situacaoFormatada = 'Pendente';
+                                }
+                            }
+                        } catch(e) { console.error("Falha ao puxar histórico da turma: " + ct.formatado); }
+                    }
+                    
+                    htmlCursosHist += `<tr>
+                        <td style="font-weight: bold;">${ct.formatado}</td>
+                        <td style="text-align: center;">${freqFormatada}</td>
+                        <td style="text-align: center;">${mediaFormatada}</td>
+                        <td style="text-align: center; font-weight: bold; text-transform: uppercase;">${situacaoFormatada}</td>
+                    </tr>`;
+                }
+            }
+            
+            // Adicionando as linhas em branco para preenchimento manual (Escrito a mão quando necessário)
+            for(let i=0; i<3; i++) {
+                htmlCursosHist += '<tr><td style="border: 1px dashed #ccc;"></td><td style="border: 1px dashed #ccc;"></td><td style="border: 1px dashed #ccc;"></td><td style="border: 1px dashed #ccc;"></td></tr>';
+            }
+            document.getElementById('h-cursos-tbody').innerHTML = htmlCursosHist;
+
             const dbPayload = {
                 cpf: dadosAluno.cpf,
                 nome: dadosAluno.nome,
@@ -852,7 +1006,7 @@
                 bairro: dadosAluno.bairro,
                 referencia: dadosAluno.referencia,
                 escolaridade: dadosAluno.escolaridade,
-                cursos: strCursosDB,
+                cursos: strCursosDB, // Conserva a string intacta original para preservar o DB
                 tipo_sanguineo: dadosAluno.tipoSanguineo,
                 cadunico: dadosAluno.cadunico,
                 alergia: dadosAluno.alergia,
@@ -864,32 +1018,25 @@
             const cpfJaExiste = todosAlunosNuvem.find(a => a.cpf.replace(/\D/g, '') === cpfLimpo);
             let realizarUpsert = true;
 
-            // Tratamento das permissões e travas do Perfil Diretora
             if (nivelAcessoUsuario === 'Diretora') {
                 if (alunoEditandoCpf) {
-                    // Já é uma edição, bloqueia upsert. 
                     realizarUpsert = false;
-                    if(modoImpressao === 'nenhuma') {
-                        alert("Ação bloqueada: O perfil Diretora não pode salvar edições.");
-                        return;
-                    }
-                } else {
-                    // É um novo cadastro, verifica se CPF já existe no banco (impedindo que ela sobrescreva sem querer ao errar um CPF)
-                    if (cpfJaExiste) {
-                        alert("Ação bloqueada: Este CPF já está cadastrado no sistema. O perfil Diretora não tem permissão para sobrescrever/editar registros existentes.");
-                        return;
-                    }
+                    if(modoImpressao === 'nenhuma') return alert("Ação bloqueada: O perfil Diretora não pode salvar edições.");
+                } else if (cpfJaExiste) {
+                    return alert("Ação bloqueada: Este CPF já está cadastrado no sistema. O perfil Diretora não tem permissão para sobrescrever.");
                 }
             }
 
             if (realizarUpsert) {
                 const { error: dbError } = await supa.from('alunos_ccp').upsert(dbPayload, { onConflict: 'cpf' });
-                if(dbError) { alert("Falha na sincronização com o banco de dados: " + dbError.message); return; }
+                if(dbError) return alert("Falha na sincronização com o banco de dados: " + dbError.message);
                 await baixarListaGlobalAlunos();
             }
 
+            // Controle de Impressão das Vias
             if(modoImpressao === 'ficha') document.body.classList.add('print-only-ficha');
             else if(modoImpressao === 'cart') document.body.classList.add('print-only-cart');
+            else if(modoImpressao === 'historico') document.body.classList.add('print-only-historico');
 
             if(modoImpressao !== 'nenhuma') { 
                 window.print(); 
@@ -897,18 +1044,17 @@
                 alert(`Dados de ${dadosAluno.nome} gravados na nuvem com sucesso.`); 
             }
             
-            document.body.classList.remove('print-only-ficha', 'print-only-cart'); 
+            document.body.classList.remove('print-only-ficha', 'print-only-cart', 'print-only-historico'); 
             limparFormulario();
         }
 
         function limparFormulario() {
             document.getElementById('cadastroForm').reset();
-            popularCursosNoFormulario('');
             document.getElementById('inputBuscaCpf').value = "";
             document.getElementById('busca-msg').innerText = "";
             document.getElementById('print-img-ficha').src = "";
             document.getElementById('print-img-cart').src = "";
-            document.getElementById('p-cursos-container').innerHTML = "";
+            document.getElementById('h-cursos-tbody').innerHTML = "";
             document.getElementById('c-cursos-lista').innerText = "";
             
             document.getElementById('dataCadastro').value = new Date().toISOString().split('T')[0];
@@ -916,12 +1062,17 @@
             document.getElementById('medicamento').value = "Não";
             document.getElementById('alergia').value = "Não";
             document.getElementById('cadunico').value = "Não";
+
+            // Limpa Histórico em tela
+            document.getElementById('lista-historico-cursos').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px; color: var(--text-muted);">Busque um aluno para carregar o histórico.</td></tr>';
+
             atualizarCoresValidacao(); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
             alunoEditandoCpf = null;
+            cursosAtuaisAluno = ""; 
             ajustarBotoesDiretora(false);
-            document.getElementById('btnActionDelete').style.display = 'none'; // Oculta botão de exclusão
+            document.getElementById('btnActionDelete').style.display = 'none'; 
         }
     </script>
 </body>

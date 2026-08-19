@@ -492,7 +492,7 @@
                                 <div class="c-doc-item"><span class="c-lbl">CPF</span><span class="c-val" id="c-cpf"></span></div>
                                 <div class="c-doc-item" style="text-align: right;"><span class="c-lbl">Nasc.</span><span class="c-val" id="c-nascimento"></span></div>
                             </div>
-                            <div class="c-cursos-box"><span class="c-lbl">CURSOS / TURMAS</span><div class="c-cursos-txt" id="c-cursos-lista"></div></div>
+                            <div class="c-cursos-box"><span class="c-lbl">CURSOS / TURMAS ATIVOS</span><div class="c-cursos-txt" id="c-cursos-lista"></div></div>
                             <div class="c-alerta-box">
                                 <div class="c-alerta-header"><span class="c-alerta-titulo">⚠ INFORMAÇÕES MÉDICAS</span><span class="c-badge-sangue" id="c-sangue-badge"></span></div>
                                 <div class="c-alerta-linha"><span class="c-alerta-lbl">Alergias:</span><span class="c-alerta-val" id="c-alergia-cart"></span></div>
@@ -537,8 +537,18 @@
             if (!textoBruto) return "";
             return textoBruto
                 .replace(/[\[\]()]/g, '')     
-                .replace(/TURMA\s?/gi, '')    
+                .replace(/TURMA\s?/gi, '')  
                 .replace(/\s+/g, ' ')         
+                .trim();
+        }
+
+        function formatarCursoCarteirinha(textoBruto) {
+            if (!textoBruto) return "";
+            return textoBruto
+                .replace(/\(.*?\)/g, '')      // Remove o conteúdo entre parênteses (Turno, Dias, Status)
+                .replace(/[\[\]]/g, '')       // Remove apenas os colchetes
+                .replace(/TURMA\s?/gi, '')    // Remove a palavra TURMA
+                .replace(/\s+/g, ' ')         // Normaliza os espaços restantes
                 .trim();
         }
 
@@ -768,9 +778,12 @@
             for (const ct of cursosUnificados) {
                 let freqFormatada = '-'; let mediaFormatada = '-'; let situacaoFormatada = '';
                 let freqValor = 0; let mediaValor = 0; let hasData = false; let isCursando = false;
+                let isDesistente = false;
 
                 try {
                     for (let orig of ct.originais) {
+                        if (orig.includes('(INATIVO)')) isDesistente = true;
+
                         const match = orig.match(/(.*?)\s+\[(.*?)\]/);
                         if (match) {
                             let nomeConsulta = match[1].trim();
@@ -779,7 +792,7 @@
                             const { data: turmaData } = await supa.from('turmas').select('data_fim').eq('curso_nome', nomeConsulta).eq('identificador', identConsulta).single();
                             if (turmaData && turmaData.data_fim) {
                                 const dataFim = new Date(turmaData.data_fim + 'T23:59:59-03:00');
-                                if (new Date() <= dataFim) isCursando = true;
+                                if (new Date() <= dataFim && !isDesistente) isCursando = true;
                             }
                         }
                     }
@@ -814,7 +827,9 @@
                         }
                     }
 
-                    if (isCursando) {
+                    if (isDesistente) {
+                        situacaoFormatada = '<span style="color: #ef4444;">Desistente</span>';
+                    } else if (isCursando) {
                         situacaoFormatada = '<span style="color: #f59e0b;">Cursando</span>';
                     } else {
                         if (hasData && mediaFormatada !== '-' && freqFormatada !== '-') {
@@ -901,10 +916,9 @@
 
             let strCursosDB = cursosAtuaisAluno || "";
             
-            // Deduplicação e formatação para impressão na carteirinha
+            // Deduplicação e formatação para impressão na carteirinha e histórico
             const cursosBrutos = strCursosDB.split('|').map(s => s.trim()).filter(s => s !== '');
             let cursosMap = new Map();
-            let textosFormatadosCarteirinha = [];
 
             for (let c of cursosBrutos) {
                 let cFormatado = formatarNomeCurso(c);
@@ -912,18 +926,14 @@
                 
                 if (!cursosMap.has(chave)) {
                     cursosMap.set(chave, { formatado: cFormatado, originais: [c] });
-                    textosFormatadosCarteirinha.push(cFormatado);
                 } else {
                     cursosMap.get(chave).originais.push(c);
                 }
             }
 
-            let txtCursosCart = textosFormatadosCarteirinha.length === 0 ? 'Nenhum curso' : textosFormatadosCarteirinha.join(' | ');
-            
             document.getElementById('c-nome').innerText = dadosAluno.nome; 
             document.getElementById('c-cpf').innerText = dadosAluno.cpf;
             document.getElementById('c-nascimento').innerText = dataNascimentoBR; 
-            document.getElementById('c-cursos-lista').innerText = txtCursosCart;
             document.getElementById('c-sangue-badge').innerText = dadosAluno.tipoSanguineo; 
             document.getElementById('c-alergia-cart').innerText = dadosAluno.alergia; 
             document.getElementById('c-medicamento-cart').innerText = dadosAluno.medicamento;
@@ -931,6 +941,7 @@
             // COMPILAR DADOS DA 3ª VIA (HISTÓRICO IMPRESSO)
             let htmlCursosHist = '';
             const cursosUnificados = Array.from(cursosMap.values());
+            let cursosCursandoCarteirinha = []; // Array para armazenar apenas cursos ativos na carteirinha formatados
             
             if (cursosUnificados.length === 0) {
                 htmlCursosHist = '<tr><td colspan="4" style="text-align: center; height: 35px; color: #555;">Nenhum curso matriculado.</td></tr>';
@@ -940,10 +951,13 @@
                 for(const ct of cursosUnificados) {
                     let freqFormatada = ''; let mediaFormatada = ''; let situacaoFormatada = '';
                     let freqValor = 0; let mediaValor = 0; let hasData = false; let isCursando = false;
+                    let isDesistente = false;
                     
-                    if(modoImpressao === 'historico' || modoImpressao === 'todas') {
+                    if(modoImpressao === 'historico' || modoImpressao === 'todas' || modoImpressao === 'cart') {
                         try {
                             for (let orig of ct.originais) {
+                                if (orig.includes('(INATIVO)')) isDesistente = true;
+
                                 const match = orig.match(/(.*?)\s+\[(.*?)\]/);
                                 if (match) {
                                     let nomeConsulta = match[1].trim();
@@ -952,7 +966,7 @@
                                     const { data: turmaData } = await supa.from('turmas').select('data_fim').eq('curso_nome', nomeConsulta).eq('identificador', identConsulta).single();
                                     if (turmaData && turmaData.data_fim) {
                                         const dataFim = new Date(turmaData.data_fim + 'T23:59:59-03:00');
-                                        if (new Date() <= dataFim) isCursando = true;
+                                        if (new Date() <= dataFim && !isDesistente) isCursando = true;
                                     }
                                 }
                             }
@@ -990,8 +1004,11 @@
                             }
 
                             // Situação
-                            if (isCursando) {
+                            if (isDesistente) {
+                                situacaoFormatada = 'Desistente';
+                            } else if (isCursando) {
                                 situacaoFormatada = 'Cursando';
+                                cursosCursandoCarteirinha.push(formatarCursoCarteirinha(ct.originais[0])); // Formata e adiciona se Cursando
                             } else {
                                 if (hasData && mediaFormatada !== '' && freqFormatada !== '') {
                                     if (mediaValor >= 50 && freqValor >= 75) {
@@ -1014,6 +1031,10 @@
                     </tr>`;
                 }
             }
+            
+            // Preenche a listagem da carteirinha separada por quebras de linha com a tag <br>
+            let txtCursosCart = cursosCursandoCarteirinha.length === 0 ? 'Nenhum curso ativo' : cursosCursandoCarteirinha.join('<br>');
+            document.getElementById('c-cursos-lista').innerHTML = txtCursosCart;
             
             // Adicionando as linhas em branco para preenchimento manual (Escrito a mão quando necessário)
             for(let i=0; i<3; i++) {
